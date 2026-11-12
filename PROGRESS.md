@@ -20,6 +20,8 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   - `minibook fetch` CLI implemented. A live run on 2026-11-12 (ECB/FRED/MoF, 2023-06-01 →
     today) took 115 s over the network, and a re-fetch is idempotent.
   - 43 offline tests, 97% coverage on `minibook.data`.
+- **CI**: pushed to github.com/nadirsayed/minibook; GitHub Actions run 43226781882 green
+  (ruff, format, mypy --strict, pytest).
 
 ## Next
 - M2: TARGET/US/JP calendars, day counts, schedules; Svensson EUR curve (percent→decimal,
@@ -28,12 +30,9 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
 - `init-book` needs M2 curves + M3 pricers, then runs at trade date 2026-11-02.
 
 ## Open issues (owner)
-1. **GitHub push blocked**: Claude has no GitHub access to nadirsayed/minibook (HTTP 403).
-   Install the Claude GitHub App on the repo or reconnect GitHub. Commits are local only;
-   CI has never run.
-2. **VSTOXX**: STOXX terms forbid automated download and AI use (ADR-002). Proposal: EWMA
+1. **VSTOXX**: STOXX terms forbid automated download and AI use (ADR-002). Proposal: EWMA
    (λ = 0.94) realized vol for all four indices, labelled as a proxy.
-3. **Dividend yields**: the providers' terms forbid automated/AI access. The owner looks up
+2. **Dividend yields**: the providers' terms forbid automated/AI access. The owner looks up
    the factsheets in a browser and fills `dividend_yields` in book.yaml (value, factsheet
    data date, publication date, URL). Seen during the probe, before the terms were read
    (verify yourself; not used):
@@ -41,10 +40,10 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
    - FTSE MIB: 4.04%, data as at 30 Oct 2026, publication date unknown.
    - SX5E: 2.4% (STOXX "net dividend yield"), data as of 30 Oct 2026, generated on demand.
    Definitions differ (net vs. gross); flag this in the README.
-4. **Yahoo/yfinance terms** restrict automated access and redistribution. The brief chose
+3. **Yahoo/yfinance terms** restrict automated access and redistribution. The brief chose
    it; owner to confirm. Equity data is not committed (ADR-006).
-5. **FRED vs U.S. Treasury**: FRED terms discourage scraping. The Treasury's own
+4. **FRED vs U.S. Treasury**: FRED terms discourage scraping. The Treasury's own
    daily par-yield CSV (home.treasury.gov) is the original source, has more tenors (1.5M,
    2M, 4M), and is one day fresher. Proposal: switch to Treasury, keep FRED as a cross-check.
-6. **31 Dec report timing** (ADR-007): if the ECB skips the 31 Dec curve, the report comes
+5. **31 Dec report timing** (ADR-007): if the ECB skips the 31 Dec curve, the report comes
    out on 5 Jan 2027 with a forward-filled 30 Dec curve.
