@@ -131,6 +131,14 @@ class FillRecord:
     reason: str
 
 
+@dataclass(frozen=True)
+class QualityFlag:
+    """A data-quality observation that does not stop the run (shown in the report)."""
+
+    code: str
+    message: str
+
+
 def _frozen(m: Mapping[str, object]) -> MappingProxyType[str, object]:
     return MappingProxyType(dict(m))
 
@@ -148,6 +156,7 @@ class MarketSnapshot:
     div_yields: Mapping[str, float]
     key_pillars: tuple[str, ...]
     fills: tuple[FillRecord, ...] = ()
+    quality_flags: tuple[QualityFlag, ...] = ()
     data_timestamps: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:

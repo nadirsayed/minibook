@@ -7,10 +7,11 @@ from __future__ import annotations
 import logging
 from datetime import date
 
+import pandas as pd
 import pytest
 
 from minibook.config.settings import Settings
-from minibook.data import ecb, fred, mof
+from minibook.data import ecb, fred, mof, treasury
 from minibook.data.cache import RawStore
 from minibook.data.http import FetchError
 from minibook.data.replay import FixtureClient
@@ -142,3 +143,20 @@ def test_mof_parser_handles_missing_and_footer() -> None:
 def test_mof_parser_requires_header() -> None:
     with pytest.raises(ValueError, match="header line"):
         mof.parse_jgbcme(b"nothing here\n", "latin-1", "-")  # SYNTHETIC
+
+
+# ------------------------------------------------------------------------------- Treasury
+def test_treasury_par_curve(client: FixtureClient, store: RawStore, settings: Settings) -> None:
+    treasury.fetch_par_curve(client, store, settings.treasury, START, END)
+    wide = store.load_wide("treasury", "par_curve")
+    # Recorded row 11/02/2026 of the Treasury 2026 file (fixture 25c8b50fb37d5875).
+    assert wide.loc["2026-11-02", "2M"] == 4.16
+    assert wide.loc["2026-11-02", "10Y"] == 4.91
+    assert wide.index.min() == pd.Timestamp(START) and wide.index.max() == pd.Timestamp(END)
+    assert set(wide.columns) == set(settings.treasury.columns)  # 1.5M and 20Y/30Y unused
+
+
+def test_treasury_missing_column() -> None:
+    body = b'Date,"1 Mo"\n11/02/2026,4.05\n'  # SYNTHETIC
+    with pytest.raises(ValueError, match="lacks columns"):
+        treasury.parse_par_curve(body, {"1M": "1 Mo", "3M": "3 Mo"})

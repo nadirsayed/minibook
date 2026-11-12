@@ -34,30 +34,17 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
     `builder.py` builds a snapshot for D with fill log, staleness errors, Svensson check.
   - 122 tests, 98% coverage overall.
 
+- **Owner decisions 2026-11-12 (round 2)** applied: ADR-011 on (closure exemption with
+  per-market calendars), ADR-012 (Treasury primary, FRED cross-check, identical on all 860
+  shared dates), exchange calendars ADR-013 (match observed closes exactly), Yahoo local
+  only ADR-014, EWMA vol (STOXX terms forbid personal use too). 131 tests.
+
 ## Next
 - M3 pricers: IRS (fixing proxy stored immutably), FX forwards (spot-date discounting),
   BSM options; QuantLib IRS cross-check. Then `init-book --trade-date 2026-11-02`.
 
 ## Open issues (owner)
-1. **VSTOXX**: STOXX terms forbid automated download and AI use (ADR-002). Proposal: EWMA
-   (λ = 0.94) realized vol for all four indices, labelled as a proxy.
-2. **Dividend yields**: the providers' terms forbid automated/AI access. The owner looks up
-   the factsheets in a browser and fills `dividend_yields` in book.yaml (value, factsheet
-   data date, publication date, URL). Seen during the probe, before the terms were read
-   (verify yourself; not used):
-   - CAC 40: 3.26%, as of 30 Sep 2026, published 15 Oct 2026 (no look-ahead).
-   - FTSE MIB: 4.04%, data as at 30 Oct 2026, publication date unknown.
-   - SX5E: 2.4% (STOXX "net dividend yield"), data as of 30 Oct 2026, generated on demand.
-   Definitions differ (net vs. gross); flag this in the README.
-3. **Yahoo/yfinance terms** restrict automated access and redistribution. The brief chose
-   it; owner to confirm. Equity data is not committed (ADR-006).
-4. **FRED vs U.S. Treasury**: FRED terms discourage scraping. The Treasury's own
-   daily par-yield CSV (home.treasury.gov) is the original source, has more tenors (1.5M,
-   2M, 4M), and is one day fresher. Proposal: switch to Treasury, keep FRED as a cross-check.
-5. **31 Dec report timing** (ADR-007): if the ECB skips the 31 Dec curve, the report comes
-   out on 5 Jan 2027 with a forward-filled 30 Dec curve.
-6. **Forward-fill vs Japanese market closures** (ADR-011): the strict 3-day rule fails on
-   9 TARGET days of the VaR window (Golden Week, New Year, Sep 2026). Proposal: exempt
-   gaps where every weekday is a holiday of the source market (logged). Needed by M6.
-7. **FRED lags one business day** (ADR-012): at the D+1 13:00 CET run the FRED curve for
-   D is usually not out yet. This strengthens item 4 (switch to Treasury).
+1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them. Until then options
+   cannot be priced in a report (placeholder in tests only). DAX q = 0 (total-return index).
+2. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
+   Fine for now; a better SX5E close source would remove them.

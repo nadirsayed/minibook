@@ -33,6 +33,22 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
    factsheets cannot be retrieved, use the closest available one, flag the look-ahead in
    book.yaml, the README and the report, and tell the owner.
 
+5. **Forward-fill closure exemption ON (ADR-011).** A gap longer than 3 calendar days is
+   allowed only if every weekday in it is a holiday of that market's own calendar (JP for
+   JGBs, US for Treasuries, each exchange for its index, ADR-013). It is logged and shown in
+   the report's data-quality section. Any other gap > 3 days fails.
+6. **USD source (ADR-012).** U.S. Treasury daily par yield curve is primary. FRED is a
+   cross-check only: flag |diff| > 1 bp.
+7. **Yahoo (ADR-014).** yfinance approved for personal, non-commercial use. Raw Yahoo or
+   STOXX data never enters the repo (local git-ignored cache only). Tests use labelled
+   synthetic equity closes.
+8. **Vol proxy (ADR-002).** EWMA (λ = 0.94). The VSTOXX-scaled proxy is not used: the STOXX
+   terms forbid download, automated access and AI use, even for personal use.
+9. **JPY below 1Y** is flat (documented limitation; short-end anchor on the roadmap).
+10. **31 Dec 2026 report** published on 5 Jan 2027 if the ECB skips 31 Dec (ADR-007): OK.
+11. **Dividend yields** come from the owner by hand. Until then, a clearly marked
+    placeholder in tests only, never in a report.
+
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.
 - Forward-fill at most 3 calendar days, logging observation date, age and reason; beyond
@@ -42,12 +58,12 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
 - **Terms of use first.** Read a provider's terms before automating access to any new
   source, and record them in `docs/data_sources.md`. Do not download from stoxx.com,
   euronext.com or ftserussell.com/lseg.com: their terms forbid bots and AI tools (ADR-002).
-  Dividend yields are entered by the owner by hand. VSTOXX is not used until the owner
-  decides; the vol proxy is EWMA (λ = 0.94).
+  Dividend yields are entered by the owner by hand. VSTOXX is not used (decision 8).
 - Never commit `data/raw/` (ADR-006). Never commit real equity index levels: equity tests
   use labelled synthetic bars.
 - The ECB may publish no curve on 24/31 Dec (ADR-007): forward-fill under the ≤ 3-day rule.
-- FRED: use the Python `requests` client (curl's default user agent gets an empty reply).
+- FRED (cross-check only): use the Python `requests` client (curl's default user agent
+  gets an empty reply).
 
 ## Git
 - Remote: github.com/nadirsayed/minibook (default branch `main`).

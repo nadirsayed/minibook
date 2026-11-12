@@ -31,8 +31,19 @@ ecb:
     flow: EST
     key: B.EU000A2X2A25.WT
 
+treasury:
+  # Primary USD source (ADR-012): U.S. Treasury Daily Par Yield Curve Rates (public domain).
+  url_template: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/{year}/all
+  params: {type: daily_treasury_yield_curve, page: "", _format: csv}
+  # Tenor label -> CSV column. Only tenors present in every year since 2023 (the 1.5M
+  # column started in 2025), so the USD pillars, and the VaR risk factors, never change.
+  columns: {1M: "1 Mo", 2M: "2 Mo", 3M: "3 Mo", 4M: "4 Mo", 6M: "6 Mo", 1Y: "1 Yr",
+            2Y: "2 Yr", 3Y: "3 Yr", 5Y: "5 Yr", 7Y: "7 Yr", 10Y: "10 Yr"}
+  # FRED cross-check (ADR-012): flag |Treasury - FRED| above this, in bp.
+  fred_crosscheck_bp: 1.0
+
 fred:
-  # Source: FRED, Federal Reserve Bank of St. Louis; series are H.15 Treasury constant
+  # Cross-check only since ADR-012. Source: FRED, Federal Reserve Bank of St. Louis; series are H.15 Treasury constant
   # maturity par yields (Public Domain: citation requested), https://fred.stlouisfed.org/legal/
   url: https://fred.stlouisfed.org/graph/fredgraph.csv
   series: {1M: DGS1MO, 3M: DGS3MO, 6M: DGS6MO, 1Y: DGS1, 2Y: DGS2, 3Y: DGS3,
@@ -48,6 +59,9 @@ mof:
 
 equities:
   tickers: {SX5E: ^STOXX50E, DAX: ^GDAXI, CAC40: ^FCHI, FTSEMIB: FTSEMIB.MI}
+  # Exchange calendar of each index (minibook.dates.calendars.CALENDARS), used for
+  # forward-fill reasons and the market-closure exemption (ADR-011, ADR-013).
+  calendars: {SX5E: EUREX, DAX: XETRA, CAC40: EURONEXT_PARIS, FTSEMIB: BORSA_ITALIANA}
   # ADR-003: a bar dated on the fetch day is accepted only after this local time.
   # The latest end of index calculation among the four indices is 18:00 CET (EURO STOXX 50
   # calculation hours 09:00-18:00 CET); 18:30 leaves a 30-minute margin for vendor delay.
@@ -58,8 +72,8 @@ market:
   # Brief: forward-fill at most 3 calendar days, then fail explicitly.
   max_ffill_days: 3
   # If true, a longer gap is allowed when every weekday in it is a holiday of the source's
-  # own market calendar (e.g. Japanese Golden Week). Brief default: false. See ADR-011.
-  market_closure_exempt: false
+  # own market calendar (e.g. Japanese Golden Week). Approved by owner 2026-11-12 (ADR-011).
+  market_closure_exempt: true
   # Brief: Svensson rebuild must match ECB published spot rates to <= 0.1 bp.
   svensson_tolerance_bp: 0.1
   # Key-rate DV01 pillars (brief). Added to every curve as pillars (ADR-009).
@@ -72,7 +86,7 @@ market:
                 10Y, 12Y, 15Y, 20Y, 30Y]
   usd:
     # Treasury bills: bond-equivalent simple yields (ADR-010).
-    money_market: [1M, 3M, 6M]
+    money_market: [1M, 2M, 3M, 4M, 6M]
     coupon_frequency: 2
   jpy:
     # MoF constant-maturity yields used for the curve (book needs <= 10Y).

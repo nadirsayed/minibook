@@ -187,6 +187,46 @@ def japan_holidays(year: int) -> frozenset[date]:
     return frozenset(national | substitutes | citizens | bank)
 
 
+# ------------------------------------------------------------------ equity exchanges
+def _easter_closures(year: int) -> set[date]:
+    easter = easter_sunday(year)
+    return {easter - timedelta(days=2), easter + timedelta(days=1)}
+
+
+@cache
+def euronext_paris_holidays(year: int) -> frozenset[date]:
+    """Euronext Paris cash-market closures.
+
+    1 Jan, Good Friday, Easter Monday, 1 May, 25 and 26 Dec. On 24 and 31 Dec the market
+    closes early but still publishes a close.
+
+    Checked against the CAC 40 daily closes, 2023-01..2026-11 (tests).
+    """
+    _check_year(year)
+    return frozenset(
+        {date(year, 1, 1), date(year, 5, 1), date(year, 12, 25), date(year, 12, 26)}
+        | _easter_closures(year)
+    )
+
+
+@cache
+def xetra_holidays(year: int) -> frozenset[date]:
+    """Xetra / Eurex closures: as Euronext Paris, plus 24 and 31 Dec.
+
+    Checked against the DAX daily closes, 2023-01..2026-11 (tests).
+    """
+    return euronext_paris_holidays(year) | {date(year, 12, 24), date(year, 12, 31)}
+
+
+@cache
+def borsa_italiana_holidays(year: int) -> frozenset[date]:
+    """Borsa Italiana closures: as Xetra, plus 15 Aug (Ferragosto).
+
+    Checked against the FTSE MIB daily closes, 2023-01..2026-11 (tests).
+    """
+    return xetra_holidays(year) | {date(year, 8, 15)}
+
+
 # --------------------------------------------------------------------------- Calendar
 @dataclass(frozen=True)
 class Calendar:
@@ -256,5 +296,12 @@ class Calendar:
 TARGET = Calendar("TARGET", (target_holidays,))
 US = Calendar("US-FED", (us_fed_holidays,))
 JP = Calendar("JP", (japan_holidays,))
+EURONEXT_PARIS = Calendar("EURONEXT_PARIS", (euronext_paris_holidays,))
+XETRA = Calendar("XETRA", (xetra_holidays,))
+# Eurex (EURO STOXX 50 derivatives and index calculation days) follows the Xetra calendar.
+EUREX = Calendar("EUREX", (xetra_holidays,))
+BORSA_ITALIANA = Calendar("BORSA_ITALIANA", (borsa_italiana_holidays,))
 
-CALENDARS: dict[str, Calendar] = {"TARGET": TARGET, "US": US, "JP": JP}
+CALENDARS: dict[str, Calendar] = {
+    c.name: c for c in (TARGET, US, JP, EURONEXT_PARIS, XETRA, EUREX, BORSA_ITALIANA)
+}

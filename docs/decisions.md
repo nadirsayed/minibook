@@ -34,12 +34,22 @@ for its usage terms to be documented. The STOXX Conditions of Use
 
 Yahoo `^V2TX` returns "Quote not found" (probe of 2026-11-12), so it is not an alternative.
 
+Owner question (2026-11-12): do the terms allow *personal, non-commercial* use? No.
+§3.1 allows viewing on screen "for your own internal information and reference purposes
+only, and on a non-commercial basis", and in the same paragraph forbids downloading,
+saving, copying and creating any "model" from the data. §3.5 forbids automated access
+"regardless of your purpose, including research". §3.6 forbids inputting the data into
+any AI system. A daily automated download, stored locally and processed by this pipeline,
+breaks all three even for personal use.
+
 **Decision.** minibook does not download or store any STOXX website data. The copies
 fetched during the 2026-11-12 probe, before the terms were read, were deleted. Nothing from
-stoxx.com was ever committed. Vol proxy until the owner decides: the brief's fallback, EWMA
-realized vol (λ = 0.94) per index, labelled as a proxy.
+stoxx.com was ever committed. The vol proxy is therefore the brief's fallback, EWMA realized vol (λ = 0.94) per index,
+labelled as a proxy. The owner's preferred VSTOXX-scaled proxy is not possible under these
+terms.
 
-**Status.** Pending owner decision.
+**Status.** Decided 2026-11-12: EWMA is the vol proxy (owner made VSTOXX conditional on
+the terms allowing personal use, and they do not).
 
 ## ADR-003: Exclude the current day's partial bar from equity data
 
@@ -155,8 +165,11 @@ is closed, its last close is the current value. The fill is still logged with ag
 reason. With the exemption, 0 stale days remain in 2023-06..2026-11. Any other gap, such as
 a failed publication, still fails explicitly.
 
-**Status.** Implemented, but **off by default** (brief rule). Owner decision needed before
-M6 (VaR).
+**Status.** Approved by owner 2026-11-12 and **on by default**. The calendar is the
+source's own: JP for JGBs, US for Treasuries, each index's exchange (ADR-013). Every such
+fill is logged and shown in the report's data-quality section. In the VaR history, the
+reopening day carries the whole multi-day move (docs/methodology.md). Any other gap longer
+than 3 days still fails.
 
 ## ADR-012: FRED is one business day late for the D+1 run
 
@@ -169,4 +182,39 @@ from D-1 (a 1-day forward-fill on almost every report).
 **Proposal.** Fetch the Treasury "Daily Treasury Par Yield Curve Rates" CSV (original source,
 U.S. government work) as the primary USD source, and keep FRED as a cross-check.
 
-**Status.** Owner decision needed (the brief names FRED).
+**Status.** Approved by owner 2026-11-12. Treasury is primary
+(`minibook.data.treasury`), with tenors 1M, 2M, 3M, 4M, 6M (bills) and 1Y–10Y. FRED is a
+cross-check: |Treasury − FRED| > 1 bp on the same date raises a `FRED_CROSSCHECK` quality
+flag. A missing FRED value is normal, given the lag. Over 2023-06-01..2026-11-09 the two
+agree exactly on all 860 shared dates.
+
+## ADR-013: Exchange calendars for equity indices; Yahoo SX5E gaps
+
+**Decision.** Each index uses its exchange calendar, for forward-fill reasons and for the
+closure exemption:
+- Euronext Paris (CAC 40): 1 Jan, Good Friday, Easter Monday, 1 May, 25–26 Dec.
+- Xetra (DAX) and Eurex (EURO STOXX 50): the above plus 24 and 31 Dec.
+- Borsa Italiana (FTSE MIB): the Xetra set plus 15 Aug.
+
+**Evidence.** These rules reproduce exactly the weekdays with and without a Yahoo close
+for CAC 40, DAX and FTSE MIB over 2023-01-02..2026-11-11 (checked 2026-11-12; the data is
+not committed). QuantLib agrees for Eurex and Borsa Italiana. It differs in two places,
+where the data contradicts it: France.Exchange closes 24/31 Dec, but CAC closes exist on
+those days (early close); Germany.Xetra keeps 31 Dec open, but there was no DAX close in
+2024 or 2025. The tests pin these documented differences.
+
+**Data-quality finding.** Yahoo's `^STOXX50E` history has no bar on 15 Eurex trading days
+in that window, all Swiss holidays: 2 Jan, Ascension, Whit Monday, 1 Aug. DAX and CAC
+closes exist on those days, so the index was calculated. This is a feed artifact, not a
+closure. Those days are forward-filled (≤ 3 days) with the reason "source gap", flagged in
+the report, and never covered by the closure exemption.
+
+## ADR-014: Yahoo data stays local; dividend placeholder
+
+**Decision (owner, 2026-11-12).** yfinance is used for personal, non-commercial purposes.
+Yahoo and STOXX data is never committed: it lives only in the git-ignored `data/raw/`
+cache. Tests use labelled synthetic equity closes. Committed fixtures are ECB, U.S.
+Treasury, FRED (H.15, public domain) and MoF data only, all redistributable with
+attribution. Until the owner provides the dividend yields, a clearly marked placeholder
+exists in tests only. A report can never use it: the option pricer fails without a real
+dividend yield in book.yaml.

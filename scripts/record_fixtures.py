@@ -2,7 +2,7 @@
 
 Window: 2026-10-26 .. 2026-11-06 (around the trade date 2026-11-02).
 
-* ECB YC / EXR / EST and FRED DGS*: recorded verbatim.
+* ECB YC / EXR / EST, U.S. Treasury par curve (2026 file) and FRED DGS*: verbatim.
 * MoF jgbcme_all.csv (history since 1974, ~0.7 MB): truncated to the title, header and
   rows dated on or after 2026-10-01. Kept rows are byte-identical. The manifest ``note``
   says so.
@@ -22,7 +22,7 @@ from datetime import date
 from pathlib import Path
 
 from minibook.config.settings import load_settings
-from minibook.data import ecb, fred, mof
+from minibook.data import ecb, fred, mof, treasury
 from minibook.data.cache import RawStore
 from minibook.data.http import RequestsClient
 from minibook.data.replay import RecordingClient, request_id
@@ -67,6 +67,7 @@ def main() -> int:
         ecb.fetch_yield_curve(rec, store, s.ecb, START, END)
         ecb.fetch_fx(rec, store, s.ecb, START, END)
         ecb.fetch_estr(rec, store, s.ecb, START, END)
+        treasury.fetch_par_curve(rec, store, s.treasury, START, END)
         fred.fetch_ust_cmt(rec, store, s.fred, START, END)
         mof.fetch_jgb(rec, store, s.mof, include_history=True)
     _truncate_mof_history(rec, s.mof.history_url)

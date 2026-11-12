@@ -1,4 +1,4 @@
-"""Store filled from the recorded real fixtures (ECB, FRED, MoF, window 2026-10-26..11-06)
+"""Store filled from recorded real fixtures (ECB, Treasury, FRED, MoF; 2026-10-26..11-06)
 plus SYNTHETIC equity closes (no real index data is committed)."""
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from minibook.config.settings import Settings
-from minibook.data import ecb, fred, mof
+from minibook.data import ecb, fred, mof, treasury
 from minibook.data.cache import RawStore
 from minibook.data.replay import FixtureClient
 
@@ -41,6 +41,7 @@ def market_store(tmp_path: Path, settings: Settings, client: FixtureClient) -> R
     store = RawStore(tmp_path / "raw")
     ecb.fetch_yield_curve(client, store, settings.ecb, START, END)
     ecb.fetch_fx(client, store, settings.ecb, START, END)
+    treasury.fetch_par_curve(client, store, settings.treasury, START, END)
     fred.fetch_ust_cmt(client, store, settings.fred, START, END)
     mof.fetch_jgb(client, store, settings.mof)
     synthetic_equities(store, list(settings.equities.tickers))

@@ -31,24 +31,26 @@ import pandas as pd
 
 from minibook.config.settings import Settings
 from minibook.data.cache import RawStore
-from minibook.dates.calendars import JP, TARGET, US, Calendar
+from minibook.dates.calendars import CALENDARS, JP, TARGET, US, Calendar
 from minibook.dates.tenor import Tenor
 from minibook.market.bootstrap import bootstrap_par_curve
 from minibook.market.curves import ZeroCurve
-from minibook.market.snapshot import FillRecord, MarketSnapshot
+from minibook.market.snapshot import FillRecord, MarketSnapshot, QualityFlag
 from minibook.market.svensson import SvenssonParams, svensson_curve, validation_errors_bp
 from minibook.market.vol import ewma_vol
 
 LOG = logging.getLogger(__name__)
 PERCENT = 100.0
+BP_PER_PERCENT = 100.0
 
-# Market calendar of each source: used to explain fills, and for the closure exemption.
-SOURCE_CALENDARS: dict[tuple[str, str], Calendar | None] = {
+# Market calendar of each rates/FX source: used to explain fills, and for the closure
+# exemption. Equity indices use their own exchange calendar (settings.equities.calendars).
+SOURCE_CALENDARS: dict[tuple[str, str], Calendar] = {
     ("ecb", "yield_curve"): TARGET,
     ("ecb", "fx"): TARGET,
+    ("treasury", "par_curve"): US,
     ("fred", "ust_cmt"): US,
     ("mof", "jgb_cm"): JP,
-    ("equities", "index_close"): None,
 }
 
 
@@ -63,6 +65,7 @@ class StaleDataError(MarketDataError):
 @dataclass(frozen=True)
 class _Picked:
     by_series: dict[str, float]
+    obs_dates: dict[str, date]
     fills: list[FillRecord]
     first_fetched: str
 
@@ -90,8 +93,8 @@ class SnapshotBuilder:
             self._cache[key] = self.store.load(source, dataset)
         return self._cache[key]
 
-    def _closure_ok(self, cal: Calendar | None, obs_date: date, target: date) -> bool:
-        if cal is None or not self.s.market.market_closure_exempt:
+    def _closure_ok(self, cal: Calendar, obs_date: date, target: date) -> bool:
+        if not self.s.market.market_closure_exempt:
             return False
         d = obs_date + timedelta(days=1)
         while d <= target:
@@ -100,11 +103,16 @@ class SnapshotBuilder:
             d += timedelta(days=1)
         return True
 
+    def _calendar(self, source: str, dataset: str, series: str) -> Calendar:
+        if (source, dataset) == ("equities", "index_close"):
+            return CALENDARS[self.s.equities.calendars[series]]
+        return SOURCE_CALENDARS[(source, dataset)]
+
     def _pick(self, source: str, dataset: str, series: Sequence[str], as_of: date) -> _Picked:
         df = self._frame(source, dataset)
         df = df.loc[(df["obs_date"] <= as_of) & df["series"].isin(list(series))]
-        cal = SOURCE_CALENDARS.get((source, dataset))
         values: dict[str, float] = {}
+        obs_dates: dict[str, date] = {}
         fills: list[FillRecord] = []
         fetched: list[pd.Timestamp] = []
         for name in series:
@@ -117,9 +125,11 @@ class SnapshotBuilder:
             obs_date: date = row["obs_date"]
             age = (as_of - obs_date).days
             if age > 0:
-                holiday = cal is not None and cal.is_holiday(as_of)
+                cal = self._calendar(source, dataset, name)
                 reason = f"no {dataset} observation for {as_of}" + (
-                    f"; {as_of} is a {cal.name} holiday" if holiday and cal else ""
+                    f"; {as_of} is a {cal.name} holiday"
+                    if cal.is_holiday(as_of)
+                    else f" although {as_of} is a {cal.name} business day (source gap)"
                 )
                 if age > self.s.market.max_ffill_days:
                     if not self._closure_ok(cal, obs_date, as_of):
@@ -132,8 +142,9 @@ class SnapshotBuilder:
                 LOG.warning("forward-fill: %s", rec)
                 fills.append(rec)
             values[name] = float(row["value"])
+            obs_dates[name] = obs_date
             fetched.append(pd.Timestamp(row["first_fetched_utc"]))
-        return _Picked(values, fills, max(fetched).isoformat())
+        return _Picked(values, obs_dates, fills, max(fetched).isoformat())
 
     # ------------------------------------------------------------------- curves
     def _eur_curve(self, as_of: date) -> tuple[ZeroCurve, _Picked]:
@@ -149,12 +160,36 @@ class SnapshotBuilder:
             )
         return svensson_curve(params, list(self.s.market.eur_pillars)), picked
 
-    def _usd_curve(self, as_of: date) -> tuple[ZeroCurve, _Picked]:
-        labels = list(self.s.fred.series)
-        picked = self._pick("fred", "ust_cmt", labels, as_of)
+    def _usd_curve(self, as_of: date) -> tuple[ZeroCurve, _Picked, list[QualityFlag]]:
+        labels = list(self.s.treasury.columns)
+        picked = self._pick("treasury", "par_curve", labels, as_of)
         quotes = {k: v / PERCENT for k, v in picked.by_series.items()}
         m = self.s.market.usd
-        return bootstrap_par_curve("USD", quotes, m.money_market, m.coupon_frequency), picked
+        curve = bootstrap_par_curve("USD", quotes, m.money_market, m.coupon_frequency)
+        return curve, picked, self._fred_crosscheck(as_of, picked)
+
+    def _fred_crosscheck(self, as_of: date, picked: _Picked) -> list[QualityFlag]:
+        """Compare Treasury with FRED for the same observation date (ADR-012).
+
+        FRED lags Treasury by about one business day, so a missing FRED value is normal and
+        not flagged. Only differences above ``treasury.fred_crosscheck_bp`` are flagged.
+        """
+        fred = self._frame("fred", "ust_cmt").set_index(["obs_date", "series"])["value"]
+        flags = []
+        for label, value in picked.by_series.items():
+            obs_date = picked.obs_dates[label]
+            if (obs_date, label) not in fred.index:
+                continue
+            ref = float(fred[(obs_date, label)])
+            diff_bp = (value - ref) * BP_PER_PERCENT
+            if abs(diff_bp) > self.s.treasury.fred_crosscheck_bp:
+                msg = (
+                    f"USD {label} {obs_date}: Treasury {value:.3f}% vs FRED "
+                    f"{ref:.3f}% ({diff_bp:+.2f} bp)"
+                )
+                LOG.warning("FRED cross-check: %s", msg)
+                flags.append(QualityFlag("FRED_CROSSCHECK", msg))
+        return flags
 
     def _jpy_curve(self, as_of: date) -> tuple[ZeroCurve, _Picked]:
         m = self.s.market.jpy
@@ -179,9 +214,16 @@ class SnapshotBuilder:
 
     # --------------------------------------------------------------------- build
     def build(
-        self, as_of: date, div_yields: Mapping[str, float], underlyings: Sequence[str] | None = None
+        self,
+        as_of: date,
+        div_yields: Mapping[str, float] | None = None,
+        underlyings: Sequence[str] | None = None,
     ) -> MarketSnapshot:
-        """Build the snapshot for ``as_of`` (must be a TARGET business day)."""
+        """Build the snapshot for ``as_of`` (must be a TARGET business day).
+
+        ``div_yields`` may be omitted (e.g. for ``init-book``, which needs no dividends).
+        Option pricing then fails explicitly for lack of a dividend yield.
+        """
         if not TARGET.is_business_day(as_of):
             raise ValueError(f"{as_of} is not a TARGET business day")
         names = list(underlyings if underlyings is not None else self.s.equities.tickers)
@@ -189,14 +231,14 @@ class SnapshotBuilder:
         key_t = [Tenor.parse(k).years for k in keys]
 
         eur, p_eur = self._eur_curve(as_of)
-        usd, p_usd = self._usd_curve(as_of)
+        usd, p_usd, usd_flags = self._usd_curve(as_of)
         jpy, p_jpy = self._jpy_curve(as_of)
         p_fx = self._pick("ecb", "fx", list(self.s.ecb.fx.keys), as_of)
         spots, vols, p_eq = self._equities(as_of, names)
         curves = {c.currency: c.with_pillars(key_t, keys) for c in (eur, usd, jpy)}
         picks = {
             "ecb/yield_curve": p_eur,
-            "fred/ust_cmt": p_usd,
+            "treasury/par_curve": p_usd,
             "mof/jgb_cm": p_jpy,
             "ecb/fx": p_fx,
             "equities/index_close": p_eq,
@@ -207,8 +249,9 @@ class SnapshotBuilder:
             fx=p_fx.by_series,
             spots=spots,
             vols=vols,
-            div_yields={u: float(div_yields[u]) for u in names},
+            div_yields={u: float(v) for u, v in (div_yields or {}).items() if u in names},
             key_pillars=tuple(keys),
             fills=tuple(f for p in picks.values() for f in p.fills),
+            quality_flags=tuple(usd_flags),
             data_timestamps={k: p.first_fetched for k, p in picks.items()},
         )

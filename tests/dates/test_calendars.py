@@ -10,9 +10,21 @@ from dateutil.easter import easter
 from hypothesis import given
 from hypothesis import strategies as st
 
-from minibook.dates.calendars import JP, TARGET, US, BusinessDayConvention, easter_sunday
+from minibook.dates.calendars import (
+    BORSA_ITALIANA,
+    EUREX,
+    EURONEXT_PARIS,
+    JP,
+    TARGET,
+    US,
+    XETRA,
+    BusinessDayConvention,
+    easter_sunday,
+)
 
 QL = {
+    "EUREX": (EUREX, ql.Germany(ql.Germany.Eurex)),
+    "BORSA_ITALIANA": (BORSA_ITALIANA, ql.Italy(ql.Italy.Exchange)),
     "TARGET": (TARGET, ql.TARGET()),
     "US": (US, ql.UnitedStates(ql.UnitedStates.FederalReserve)),
     "JP": (JP, ql.Japan()),
@@ -93,3 +105,32 @@ def test_joint_calendar_and_business_days_between() -> None:
     assert joint.name == "TARGET+US-FED"
     days = TARGET.business_days_between(date(2026, 12, 1), date(2026, 12, 31))
     assert len(days) == 22  # brief: 22 TARGET business days in December 2026
+
+
+# Documented differences with QuantLib, where observed index closes contradict QuantLib
+# (checked 2026-11-12 against Yahoo daily closes 2023-01..2026-11; data not committed):
+# Euronext Paris publishes CAC 40 closes on 24 and 31 Dec (early close); QuantLib's
+# France.Exchange treats them as holidays. Xetra published no DAX close on 31 Dec 2024 and
+# 2025; QuantLib's Germany.Xetra treats 31 Dec as open.
+@pytest.mark.parametrize(
+    ("mine", "ref", "documented"),
+    [
+        (EURONEXT_PARIS, ql.France(ql.France.Exchange), {(12, 24), (12, 31)}),
+        (XETRA, ql.Germany(ql.Germany.Xetra), {(12, 31)}),
+    ],
+)
+def test_exchange_calendars_vs_quantlib(
+    mine: object, ref: ql.Calendar, documented: set[tuple[int, int]]
+) -> None:
+    d = date(2022, 1, 1)
+    while d <= date(2030, 12, 31):
+        if mine.is_business_day(d) != ref.isBusinessDay(qd(d)):  # type: ignore[attr-defined]
+            assert (d.month, d.day) in documented, d
+        d += timedelta(days=1)
+
+
+def test_exchange_specific_closures() -> None:
+    assert XETRA.is_holiday(date(2026, 12, 24)) and EUREX.is_holiday(date(2026, 12, 31))
+    assert EURONEXT_PARIS.is_business_day(date(2026, 12, 24))
+    assert BORSA_ITALIANA.is_holiday(date(2025, 8, 15))
+    assert XETRA.is_business_day(date(2025, 8, 15))

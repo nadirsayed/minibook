@@ -23,7 +23,7 @@ import typer
 
 from minibook import __version__
 from minibook.config.settings import DEFAULT_SETTINGS_PATH, Settings, load_settings
-from minibook.data import ecb, equities, fred, mof
+from minibook.data import ecb, equities, fred, mof, treasury
 from minibook.data.cache import RawStore
 from minibook.data.http import HttpClient, RequestsClient
 
@@ -113,6 +113,9 @@ def fetch(
         "ecb.yield_curve": lambda: ecb.fetch_yield_curve(client, store, s.ecb, start, end),
         "ecb.fx": lambda: ecb.fetch_fx(client, store, s.ecb, start, end),
         "ecb.estr": lambda: ecb.fetch_estr(client, store, s.ecb, start, end),
+        "treasury.par_curve": lambda: treasury.fetch_par_curve(
+            client, store, s.treasury, start, end
+        ),
         "fred.ust_cmt": lambda: fred.fetch_ust_cmt(client, store, s.fred, start, end),
         "mof.jgb_cm": lambda: mof.fetch_jgb(client, store, s.mof),
         "equities.index_close": lambda: equities.fetch_index_closes(

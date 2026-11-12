@@ -79,6 +79,15 @@ class FredSettings(_Frozen):
     series: dict[str, str]
 
 
+class TreasurySettings(_Frozen):
+    """U.S. Treasury daily par yield curve CSV (one file per year)."""
+
+    url_template: str
+    params: dict[str, str]
+    columns: dict[str, str]
+    fred_crosscheck_bp: float = Field(gt=0.0)
+
+
 class MofSettings(_Frozen):
     """Japan MoF JGB constant-maturity yield CSVs."""
 
@@ -92,6 +101,7 @@ class EquitySettings(_Frozen):
     """Equity index tickers (yfinance) and the intraday-bar cutoff (ADR-003)."""
 
     tickers: dict[str, str]
+    calendars: dict[str, str]
     close_cutoff_local: time
     timezone: str
 
@@ -137,6 +147,7 @@ class Settings(_Frozen):
     data: DataSettings
     http: HttpSettings
     ecb: EcbSettings
+    treasury: TreasurySettings
     fred: FredSettings
     mof: MofSettings
     equities: EquitySettings
@@ -171,5 +182,6 @@ __all__ = [
     "MarketSettings",
     "MofSettings",
     "Settings",
+    "TreasurySettings",
     "load_settings",
 ]
