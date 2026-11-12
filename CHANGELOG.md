@@ -5,6 +5,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M3 pricers: EUR IRS (QuantLib cross-checked), FX forwards with spot-date discounting,
+  BSM index options with analytical partials; immutable EURIBOR proxy fixing store;
+  config/book.yaml with pydantic models; `minibook init-book` (freeze + verify).
 - U.S. Treasury daily par yield curve fetcher (primary USD source) with FRED cross-check
   quality flag; exchange calendars (Euronext Paris, Xetra, Eurex, Borsa Italiana);
   docs/methodology.md (forward-fill and VaR reopening-day treatment).

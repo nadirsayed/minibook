@@ -23,6 +23,7 @@ class DataSettings(_Frozen):
     """Location of the raw cache and start of the history window."""
 
     raw_dir: Path
+    fixings_dir: Path
     history_start: date
 
 
@@ -141,6 +142,14 @@ class MarketSettings(_Frozen):
     vol: VolSettings
 
 
+class FxConventionSettings(_Frozen):
+    """Spot-date rule of one currency pair (calendar names from ``CALENDARS``)."""
+
+    spot_lag: int = Field(ge=0)
+    lag_calendars: tuple[str, ...]
+    settlement_calendars: tuple[str, ...]
+
+
 class Settings(_Frozen):
     """Root settings model."""
 
@@ -152,6 +161,7 @@ class Settings(_Frozen):
     mof: MofSettings
     equities: EquitySettings
     market: MarketSettings
+    fx_conventions: dict[str, FxConventionSettings]
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:

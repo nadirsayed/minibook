@@ -59,6 +59,8 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
   source, and record them in `docs/data_sources.md`. Do not download from stoxx.com,
   euronext.com or ftserussell.com/lseg.com: their terms forbid bots and AI tools (ADR-002).
   Dividend yields are entered by the owner by hand. VSTOXX is not used (decision 8).
+- Option frozen terms (strikes, trade-date closes) go to the git-ignored
+  `config/book.private.yaml`, never to book.yaml (ADR-018).
 - Never commit `data/raw/` (ADR-006). Never commit real equity index levels: equity tests
   use labelled synthetic bars.
 - The ECB may publish no curve on 24/31 Dec (ADR-007): forward-fill under the ≤ 3-day rule.

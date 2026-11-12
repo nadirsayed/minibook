@@ -218,3 +218,53 @@ Treasury, FRED (H.15, public domain) and MoF data only, all redistributable with
 attribution. Until the owner provides the dividend yields, a clearly marked placeholder
 exists in tests only. A report can never use it: the option pricer fails without a real
 dividend yield in book.yaml.
+
+## ADR-015: FX forwards are discounted from the spot date
+
+**Context.** The brief writes F = S · DF_base(T) / DF_quote(T), which treats S as a rate for
+value today. ECB reference rates are spot rates (value T+2), and the brief also asks for
+pair-specific spot lags and settlement calendars.
+
+**Decision.** F = S · [DF_base(T)/DF_base(s)] / [DF_quote(T)/DF_quote(s)], where s is the
+pair's spot date seen from the valuation date (market standard). Spot rules: the lag is
+counted on the non-USD calendar(s), then the date rolls to a day that is good in every
+settlement calendar (EURUSD: TARGET+US, USDJPY: JP+US). Delivery is spot + tenor, modified
+following, with the end-of-month rule. Inception PV is 0 either way. The difference from the
+brief's formula is about (r_base − r_quote) × 2/365 in F.
+
+## ADR-016: EURIBOR fixing proxy and its immutable store
+
+**Decision.** The fixing proxy for a coupon is the ACT/360 simple forward over the coupon's
+accrual period from the EUR curve of the *fixing date*. On that date it equals the
+projected rate, so PV is continuous. It is recorded once in
+`data/fixings/EURIBOR6M_proxy.csv` (append-only; committed, being derived from ECB data). A
+different value for an existing date raises `FixingConflictError`. Pricing a coupon whose
+fixing date is in the past without a stored fixing raises. Past fixings are never
+recomputed from a later curve. The trade-date fixing (2026-11-02) is recorded by
+`init-book`; later ones by the daily run (M8).
+
+## ADR-017: Option conventions
+
+**Decision.**
+- Expiry = trade date + tenor, modified following on the exchange calendar (ADR-013).
+- T = ACT/365F from the valuation date. r = EUR zero rate z(T) from the AAA government curve
+  (single curve, documented simplification).
+- Cash settlement at expiry, using the index close as the settlement level. Listed contracts
+  use an exchange settlement price instead (simplification).
+- Strikes = strike_pct × index close on the trade date, at full float precision.
+- A missing dividend yield is a pricing error: no option PV without an owner-provided q.
+
+## ADR-018: Option trade terms live in a git-ignored private file
+
+**Context.** init-book derives option strikes from Yahoo index closes on the trade date
+(`spot_at_trade`; for the 100% SX5E call the strike *is* the close). The owner's rule is that
+raw Yahoo data is never committed (ADR-014). A push of book.yaml containing them was blocked.
+
+**Decision.** init-book writes option frozen terms to `config/book.private.yaml`
+(git-ignored). `load_book` merges them, and refuses option terms found in the public
+book.yaml. Swap and FX frozen terms, derived from ECB and Treasury data, stay in book.yaml.
+To reproduce, run `minibook fetch` and then `minibook init-book --trade-date 2026-11-02`: the
+same strikes are rebuilt deterministically from the same closes.
+
+**Status.** Implemented 2026-11-12 as the default; awaiting owner confirmation (alternative:
+commit the four trade-date closes as trade terms).

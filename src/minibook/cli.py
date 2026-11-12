@@ -22,10 +22,14 @@ from typing import Annotated
 import typer
 
 from minibook import __version__
+from minibook.config.book import DEFAULT_BOOK_PATH
 from minibook.config.settings import DEFAULT_SETTINGS_PATH, Settings, load_settings
 from minibook.data import ecb, equities, fred, mof, treasury
 from minibook.data.cache import RawStore
+from minibook.data.fixings import FixingStore
 from minibook.data.http import HttpClient, RequestsClient
+from minibook.init_book import init_book
+from minibook.market.builder import SnapshotBuilder
 
 LOG = logging.getLogger(__name__)
 NOT_IMPLEMENTED_EXIT = 2
@@ -76,13 +80,22 @@ def main(
 
 
 @app.command("init-book")
-def init_book(
+def init_book_cmd(
     trade_date: Annotated[
         date, typer.Option("--trade-date", parser=_parse_date, metavar="YYYY-MM-DD")
     ],
+    settings_path: Annotated[Path, typer.Option("--settings")] = DEFAULT_SETTINGS_PATH,
+    book_path: Annotated[Path, typer.Option("--book")] = DEFAULT_BOOK_PATH,
 ) -> None:
-    """Freeze par rate, outright forwards and strikes at TRADE_DATE into book.yaml."""
-    _not_implemented("init-book", "M8")
+    """Freeze par rate, outright forwards and strikes at TRADE_DATE into book.yaml.
+
+    Uses the cached market data (run ``minibook fetch`` first). Re-running verifies the
+    frozen terms and changes nothing.
+    """
+    s = load_settings(settings_path)
+    builder = SnapshotBuilder(RawStore(s.data.raw_dir), s)
+    status = init_book(book_path, s, builder.build, FixingStore(s.data.fixings_dir), trade_date)
+    LOG.info("init-book %s: %s", trade_date, status)
 
 
 def make_client(settings: Settings) -> HttpClient:

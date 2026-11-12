@@ -39,12 +39,25 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   shared dates), exchange calendars ADR-013 (match observed closes exactly), Yahoo local
   only ADR-014, EWMA vol (STOXX terms forbid personal use too). 131 tests.
 
+- **M3 pricers**: `instruments/` swap (QuantLib-identical), FX forward (spot-date
+  discounting, ADR-015), BSM option (Hull/Haug/QuantLib checks), immutable EURIBOR proxy
+  fixing store (ADR-016), book.yaml + pydantic models, instrument factory.
+- **init-book run 2026-11-12** on real data, trade date 2026-11-02: par rate 3.113412%,
+  EURUSD 6M outright 1.129906 (spot 1.1216), USDJPY 3M outright 156.8976 (spot 157.8994),
+  option strikes from the 2 Nov closes; fixing EURIBOR6M 2026-11-02 = 2.700604%. Re-run
+  verifies (idempotent). Option terms in git-ignored config/book.private.yaml (ADR-018). Swap and forwards PV = 0.00 at the trade date. 162 tests, 98%.
+
 ## Next
-- M3 pricers: IRS (fixing proxy stored immutably), FX forwards (spot-date discounting),
-  BSM options; QuantLib IRS cross-check. Then `init-book --trade-date 2026-11-02`.
+- M4 Greeks: delta/gamma/vega/theta per brief units, DV01 + key-rate DV01 per currency
+  (FX forwards too), FX risk on EUR/USD and EUR/JPY; every analytical Greek vs central FD;
+  DV01 on synthetic flat 2.5% vs analytic annuity.
 
 ## Open issues (owner)
-1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them. Until then options
+1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them. Three of four options
+   cannot be priced until then. Until then options
    cannot be priced in a report (placeholder in tests only). DAX q = 0 (total-return index).
 2. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
    Fine for now; a better SX5E close source would remove them.
+3. **Option terms location** (ADR-018): option strikes/closes are in the git-ignored
+   `config/book.private.yaml` (Yahoo-derived, never committed). Owner to confirm, or allow
+   committing them as trade terms.

@@ -33,3 +33,23 @@ within the 3-day limit and flagged as "source gap".
 
 See ADR-009 (representation, EUR grid), ADR-010 (USD bills), ADR-008 (JGB conventions and
 the flat JPY short end) and the module docstrings of `minibook.market`.
+
+## 3. Pricers
+
+All PVs are in EUR at `as_of`. Times are ACT/365F from `as_of`, and DF(t) = e^{−z(t) t}.
+
+**IRS** (payer, s = +1): PV = s · (N Σ_j L_j τ_j DF(t_j) − N K Σ_i τ_i DF(t_i)), with
+fixed τ on 30/360 Bond Basis and float τ on ACT/360, over unpaid periods. L_j is the stored
+fixing (past), the stored-or-proxy fixing (today), or the projected forward
+(DF(s_j)/DF(e_j) − 1)/τ_j (future). Par rate K* = PV_float / annuity.
+Cross-checked against QuantLib (`VanillaSwap`, par coupons, same curve nodes): PVs agree to
+1e-4 EUR and the par rate to 1e-12.
+
+**FX forward** (ADR-015): F = S · [DF_b(T)/DF_b(s)]/[DF_q(T)/DF_q(s)],
+PV_q = N_b (F − K) DF_q(T), PV_EUR = PV_q / (EUR/q).
+
+**Index options**: generalized BSM with continuous dividend yield (see
+`minibook.instruments.bsm` for d1, d2, price and analytical partials), scaled by
+quantity × multiplier. Checked against Hull's and Haug's worked examples, put-call parity,
+central finite differences (rel 1e-4), QuantLib's analytic engine (rel 1e-12), and the
+limits σ → 0 and T → 0.

@@ -1,0 +1,104 @@
+# minibook: the book. Single source of truth for positions.
+#
+# `frozen:` blocks are written once by `minibook init-book --trade-date 2026-11-02` from the
+# trade-date market snapshot and never changed afterwards (re-running init-book verifies
+# them). Do not edit them by hand.
+
+reporting_currency: EUR
+trade_date: 2026-11-02   # owner decision 2026-11-12 (ADR-004)
+
+swaps:
+  - id: IRS_EUR_5Y
+    currency: EUR
+    notional: 10000000
+    pay_fixed: true            # pay fixed, receive EURIBOR 6M
+    tenor: 5Y
+    spot_lag: 2                # TARGET business days
+    fixed_frequency: 1Y        # 30/360 Bond Basis (ISDA), as QuantLib EuriborSwapIsdaFixA
+    float_frequency: 6M        # ACT/360
+    index: EURIBOR6M           # curve-implied proxy fixings (data/fixings/)
+    fixing_lag: 2              # TARGET business days before accrual start
+    frozen:                    # init-book: fixed rate = par rate at trade date
+      fixed_rate: 0.031134115327431655
+      effective: 2026-11-04
+      maturity: 2031-11-04
+fx_forwards:
+  - id: FXF_EURUSD_6M
+    base: EUR
+    quote: USD
+    base_notional: 5000000     # signed: + buy base (buy EUR 5m vs USD)
+    tenor: 6M
+    frozen:                    # init-book: strike = outright forward at trade date
+      spot_at_trade: 1.1216
+      spot_date: 2026-11-04
+      delivery: 2027-05-04
+      strike: 1.1299063540646879
+  - id: FXF_USDJPY_3M
+    base: USD
+    quote: JPY
+    base_notional: -3000000    # signed: - sell base (sell USD 3m vs JPY)
+    tenor: 3M
+    frozen:
+      spot_at_trade: 157.89942938659058
+      spot_date: 2026-11-05
+      delivery: 2027-02-05
+      strike: 156.8975980352221
+
+# Hypothetical European cash-settled index options: bespoke 3M/6M expiries and exact
+# percentage strikes, with the multipliers of the listed contracts. NOT listed-contract
+# replication. Expiry = trade date + tenor, modified following on the exchange calendar.
+options:
+  - id: OPT_SX5E_C_3M_100
+    underlying: SX5E
+    option_type: call
+    quantity: 50               # signed contracts: long 50
+    tenor: 3M
+    strike_pct: 1.00
+    multiplier: 10             # EUR per index point (Eurex OESX)
+    frozen:
+  - id: OPT_DAX_P_6M_95
+    underlying: DAX
+    option_type: put
+    quantity: 20
+    tenor: 6M
+    strike_pct: 0.95
+    multiplier: 5              # EUR per index point (Eurex ODAX)
+    frozen:
+  - id: OPT_CAC40_C_3M_105
+    underlying: CAC40
+    option_type: call
+    quantity: -30              # short 30
+    tenor: 3M
+    strike_pct: 1.05
+    multiplier: 10             # EUR per index point (Euronext PXA)
+    frozen:
+  - id: OPT_FTSEMIB_P_6M_90
+    underlying: FTSEMIB
+    option_type: put
+    quantity: 40
+    tenor: 6M
+    strike_pct: 0.90
+    multiplier: 2.5            # EUR per index point (Borsa Italiana / IDEM MIBO)
+    frozen:
+dividend_yields:
+  SX5E:
+  DAX:
+    value: 0.0
+    definition: total-return index
+    note: >-
+      DAX is a performance (total-return) index: dividends are reinvested in the index,
+      so the index level does not drop on ex-dividend dates and q = 0.
+  CAC40:
+  FTSEMIB:
+frozen_metadata:
+  by: minibook init-book
+  trade_date: 2026-11-02
+  computed_at_utc: '2026-11-12T14:37:04.949003+00:00'
+  market_data_first_fetched_utc:
+    ecb/yield_curve: '2026-11-12T13:20:03.055294+00:00'
+    treasury/par_curve: '2026-11-12T14:22:24.297158+00:00'
+    mof/jgb_cm: '2026-11-12T13:21:02.347974+00:00'
+    ecb/fx: '2026-11-12T13:20:21.887823+00:00'
+    equities/index_close: '2026-11-12T14:18:57.639110+00:00'
+  forward_fills: []
+  quality_flags: []

@@ -2,6 +2,8 @@
 
 data:
   raw_dir: data/raw
+  # Immutable EURIBOR proxy fixings (derived from ECB data; committed, ADR-016).
+  fixings_dir: data/fixings
   # 501 aligned dates before 2026-12-31 + 60d realized-vol warm-up, with margin.
   history_start: 2023-06-01
 
@@ -97,3 +99,9 @@ market:
     ewma_lambda: 0.94
     warmup_days: 60
     annualization_days: 252
+
+# FX spot conventions (ADR-015). Spot lag counted on the non-USD calendar(s); the spot and
+# delivery dates must be business days in every settlement calendar.
+fx_conventions:
+  EURUSD: {spot_lag: 2, lag_calendars: [TARGET], settlement_calendars: [TARGET, US-FED]}
+  USDJPY: {spot_lag: 2, lag_calendars: [JP], settlement_calendars: [US-FED, JP]}

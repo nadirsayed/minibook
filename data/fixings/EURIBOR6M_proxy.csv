@@ -1,0 +1,2 @@
+index,fixing_date,rate,accrual_start,accrual_end,curve_as_of,method,recorded_at_utc
+EURIBOR6M,2026-11-02,0.027006037272478856,2026-11-04,2027-05-04,2026-11-02,"EUR AAA curve ACT/360 forward over the accrual period (proxy, ADR-016)",2026-11-12T14:36:19.311164+00:00

@@ -18,6 +18,9 @@ Citations used in reports: "Source: ECB Data Portal", "Source: U.S. Department o
 Treasury", "Source: FRED, Federal Reserve Bank of St. Louis; Board of Governors of the
 Federal Reserve System (H.15)", "Source: Ministry of Finance Japan".
 
+EURIBOR 6M fixings are **not** sourced (licensed data). `data/fixings/` holds minibook's own
+curve-implied proxy, derived from ECB data (ADR-016).
+
 Committed test fixtures (`tests/fixtures/http/`) contain only ECB, U.S. Treasury, FRED and
 MoF responses, all redistributable with attribution. Nothing under `data/raw/` is
 committed (only `.gitkeep`; checked 2026-11-12, including git history).

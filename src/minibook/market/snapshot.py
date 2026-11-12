@@ -31,6 +31,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import date
 from types import MappingProxyType
+from typing import Any
 
 import numpy as np
 
@@ -139,7 +140,7 @@ class QualityFlag:
     message: str
 
 
-def _frozen(m: Mapping[str, object]) -> MappingProxyType[str, object]:
+def _frozen(m: Mapping[Any, object]) -> MappingProxyType[Any, object]:
     return MappingProxyType(dict(m))
 
 
@@ -158,17 +159,32 @@ class MarketSnapshot:
     fills: tuple[FillRecord, ...] = ()
     quality_flags: tuple[QualityFlag, ...] = ()
     data_timestamps: Mapping[str, str] = field(default_factory=dict)
+    # Published (or proxy) index fixings: (index name, fixing date) -> rate (decimal).
+    # Only fixings dated on or before ``as_of`` may be present (no look-ahead).
+    fixings: Mapping[tuple[str, date], float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Freeze mappings and validate key pillars and positivity."""
-        for name in ("curves", "fx", "spots", "vols", "div_yields", "data_timestamps"):
+        for name in ("curves", "fx", "spots", "vols", "div_yields", "data_timestamps", "fixings"):
             object.__setattr__(self, name, _frozen(getattr(self, name)))
         for ccy, curve in self.curves.items():
             missing = [k for k in self.key_pillars if k not in curve.labels]
             if missing:
                 raise ValueError(f"{ccy} curve lacks key pillars {missing}")
+        future = [k for k in self.fixings if k[1] > self.as_of]
+        if future:
+            raise ValueError(f"fixings dated after {self.as_of}: {future}")
         if any(v <= 0 for v in (*self.fx.values(), *self.spots.values(), *self.vols.values())):
             raise ValueError("FX rates, spots and vols must be positive")
+
+    def with_fixings(self, fixings: Mapping[tuple[str, date], float]) -> MarketSnapshot:
+        """Return a copy carrying the fixings dated on or before ``as_of``."""
+        return replace(self, fixings={k: v for k, v in fixings.items() if k[1] <= self.as_of})
+
+    def fixing(self, index: str, fixing_date: date) -> float | None:
+        """Return the stored fixing, or None if there is none."""
+        value = self.fixings.get((index, fixing_date))
+        return None if value is None else float(value)
 
     # ---------------------------------------------------------------- accessors
     def curve(self, currency: str) -> ZeroCurve:
