@@ -11,6 +11,9 @@ For each source this script:
 Exit code 0 if every source passed, 1 otherwise. Results are also written as
 JSON to the path given by --out (default: probe_report.json).
 
+STOXX data (VSTOXX file, factsheets) is deliberately not probed: the STOXX Conditions of
+Use forbid automated access and downloads (see docs/decisions.md, ADR-002).
+
 Usage: uv run python scripts/probe_sources.py [--out probe_report.json]
 """
 
@@ -59,8 +62,7 @@ MOF_LATEST = "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/
 MOF_ALL = (
     "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv"
 )
-STOXX_V2TX = "https://www.stoxx.com/document/Indices/Current/HistoricalData/h_v2tx.txt"
-EQUITY_TICKERS = ("^STOXX50E", "^GDAXI", "^FCHI", "FTSEMIB.MI", "^V2TX")
+EQUITY_TICKERS = ("^STOXX50E", "^GDAXI", "^FCHI", "FTSEMIB.MI")
 
 
 @dataclass
@@ -207,19 +209,6 @@ def probe_mof() -> ProbeResult:
     return res
 
 
-# --------------------------------------------------------------------------- STOXX
-def probe_vstoxx() -> ProbeResult:
-    resp = _get(STOXX_V2TX)
-    df = pd.read_csv(io.StringIO(resp.text), sep=";")
-    s = pd.Series(
-        df["Indexvalue"].astype(float).to_numpy(),
-        index=pd.to_datetime(df["Date"], format="%d.%m.%Y"),
-        name="V2TX",
-    )
-    _show("STOXX VSTOXX h_v2tx.txt", s)
-    return _coverage("STOXX VSTOXX (official file)", s)
-
-
 # --------------------------------------------------------------------------- Yahoo
 def probe_yahoo(ticker: str) -> ProbeResult:
     df = yf.Ticker(ticker).history(start=HISTORY_START.isoformat(), auto_adjust=False)
@@ -243,7 +232,6 @@ def main() -> int:
         ("ECB ESTR", lambda: probe_ecb_simple("ECB EUR STR", "EST", "B.EU000A2X2A25.WT")),
         ("FRED", probe_fred),
         ("MoF", probe_mof),
-        ("STOXX", probe_vstoxx),
         *((t, (lambda t=t: probe_yahoo(t))) for t in EQUITY_TICKERS),
     ]
     results: list[ProbeResult] = []

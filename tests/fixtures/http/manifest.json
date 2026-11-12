@@ -1,0 +1,114 @@
+{
+  "https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?endPeriod=2026-11-06&format=csvdata&startPeriod=2026-10-26": {
+    "content_type": "text/csv",
+    "fetched_at_utc": "2026-11-12T13:18:28.543974+00:00",
+    "file": "a8faae229704ad39",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?format=csvdata&startPeriod=2026-10-26&endPeriod=2026-11-06"
+  },
+  "https://data-api.ecb.europa.eu/service/data/EXR/D.JPY+USD.EUR.SP00.A?endPeriod=2026-11-06&format=csvdata&startPeriod=2026-10-26": {
+    "content_type": "text/csv",
+    "fetched_at_utc": "2026-11-12T13:18:23.591020+00:00",
+    "file": "3d2de44f238aa6f8",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://data-api.ecb.europa.eu/service/data/EXR/D.JPY+USD.EUR.SP00.A?format=csvdata&startPeriod=2026-10-26&endPeriod=2026-11-06"
+  },
+  "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.BETA0+BETA1+BETA2+BETA3+SR_10Y+SR_1Y+SR_5Y+TAU1+TAU2?endPeriod=2026-11-06&format=csvdata&startPeriod=2026-10-26": {
+    "content_type": "text/csv",
+    "fetched_at_utc": "2026-11-12T13:18:00.552478+00:00",
+    "file": "1cd81c55e48d53b1",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.BETA0+BETA1+BETA2+BETA3+SR_10Y+SR_1Y+SR_5Y+TAU1+TAU2?format=csvdata&startPeriod=2026-10-26&endPeriod=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS1": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:29.822293+00:00",
+    "file": "4e595a909b714251",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS10": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:31.820990+00:00",
+    "file": "8b6347b6fb8187de",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS1MO": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:29.032247+00:00",
+    "file": "ab8fe55da9e8049e",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1MO&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS2": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:30.444921+00:00",
+    "file": "33e8d5b8410f1576",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS3": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:31.130995+00:00",
+    "file": "3b1b4ac02a0aa603",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS3&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS3MO": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:29.127153+00:00",
+    "file": "943a19cd6b54d802",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS3MO&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS5": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:31.564623+00:00",
+    "file": "684dd82f772bc0ac",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS5&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS6MO": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:29.267626+00:00",
+    "file": "ddbe6e6d493ccdf5",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS6MO&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://fred.stlouisfed.org/graph/fredgraph.csv?coed=2026-11-06&cosd=2026-10-26&id=DGS7": {
+    "content_type": "application/csv",
+    "fetched_at_utc": "2026-11-12T13:18:31.682345+00:00",
+    "file": "d04ffa2baadf87e3",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS7&cosd=2026-10-26&coed=2026-11-06"
+  },
+  "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv": {
+    "content_type": "text/csv",
+    "fetched_at_utc": "2026-11-12T13:18:34.333142+00:00",
+    "file": "3d058ba9f98a8935",
+    "note": "truncated: title, header and rows dated >= 2026-10-01 kept byte-identical; earlier rows removed to keep the fixture small",
+    "status": 200,
+    "url": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv"
+  },
+  "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv": {
+    "content_type": "text/csv",
+    "fetched_at_utc": "2026-11-12T13:18:35.442927+00:00",
+    "file": "288178268edf8cc8",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv"
+  }
+}

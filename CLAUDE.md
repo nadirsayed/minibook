@@ -39,8 +39,14 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
   that fail explicitly. Never fill silently.
 - EURIBOR fixings: curve-implied proxy, stored immutably on the fixing date; never
   recompute past fixings from today's curve.
-- Yahoo `^V2TX` does not exist (ADR-002); VSTOXX comes from the STOXX file only, with EWMA
-  as fallback.
+- **Terms of use first.** Read a provider's terms before automating access to any new
+  source, and record them in `docs/data_sources.md`. Do not download from stoxx.com,
+  euronext.com or ftserussell.com/lseg.com: their terms forbid bots and AI tools (ADR-002).
+  Dividend yields are entered by the owner by hand. VSTOXX is not used until the owner
+  decides; the vol proxy is EWMA (λ = 0.94).
+- Never commit `data/raw/` (ADR-006). Never commit real equity index levels: equity tests
+  use labelled synthetic bars.
+- The ECB may publish no curve on 24/31 Dec (ADR-007): forward-fill under the ≤ 3-day rule.
 - FRED: use the Python `requests` client (curl's default user agent gets an empty reply).
 
 ## Git

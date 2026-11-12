@@ -10,3 +10,6 @@ htmlcov/
 dist/
 output/
 probe_report.json
+# Raw market data cache: not committed (ADR-006). Rebuild with `minibook fetch`.
+data/raw/*
+!data/raw/.gitkeep

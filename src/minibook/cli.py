@@ -14,12 +14,18 @@ All commands are idempotent. Commands not yet implemented exit with status 2.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import date, datetime
+from pathlib import Path
 from typing import Annotated
 
 import typer
 
 from minibook import __version__
+from minibook.config.settings import DEFAULT_SETTINGS_PATH, Settings, load_settings
+from minibook.data import ecb, equities, fred, mof
+from minibook.data.cache import RawStore
+from minibook.data.http import HttpClient, RequestsClient
 
 LOG = logging.getLogger(__name__)
 NOT_IMPLEMENTED_EXIT = 2
@@ -79,13 +85,52 @@ def init_book(
     _not_implemented("init-book", "M8")
 
 
+def make_client(settings: Settings) -> HttpClient:
+    """Return the production HTTP client (patched in tests)."""
+    return RequestsClient(settings.http)
+
+
+EQUITY_HISTORY: equities.HistoryFn = equities.yfinance_history
+
+
 @app.command()
 def fetch(
     start: Annotated[date | None, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")] = None,
     end: Annotated[date | None, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")] = None,
+    settings_path: Annotated[Path, typer.Option("--settings")] = DEFAULT_SETTINGS_PATH,
 ) -> None:
-    """Download and cache raw market data for [START, END]."""
-    _not_implemented("fetch", "M1/M8")
+    """Download and cache raw market data for [START, END].
+
+    START defaults to ``data.history_start`` and END to today. Every source is attempted.
+    If any source fails, the failures are listed and the command exits with status 1.
+    """
+    s = load_settings(settings_path)
+    start = start or s.data.history_start
+    end = end or date.today()
+    client = make_client(s)
+    store = RawStore(s.data.raw_dir)
+    jobs: dict[str, Callable[[], object]] = {
+        "ecb.yield_curve": lambda: ecb.fetch_yield_curve(client, store, s.ecb, start, end),
+        "ecb.fx": lambda: ecb.fetch_fx(client, store, s.ecb, start, end),
+        "ecb.estr": lambda: ecb.fetch_estr(client, store, s.ecb, start, end),
+        "fred.ust_cmt": lambda: fred.fetch_ust_cmt(client, store, s.fred, start, end),
+        "mof.jgb_cm": lambda: mof.fetch_jgb(client, store, s.mof),
+        "equities.index_close": lambda: equities.fetch_index_closes(
+            EQUITY_HISTORY, store, s.equities, start, end
+        ),
+    }
+    failures = []
+    for name, job in jobs.items():
+        LOG.info("fetching %s for %s..%s", name, start, end)
+        try:
+            job()
+        except Exception:
+            LOG.exception("fetch %s failed", name)
+            failures.append(name)
+    if failures:
+        LOG.error("failed sources: %s", ", ".join(failures))
+        raise typer.Exit(code=1)
+    LOG.info("all sources fetched into %s", s.data.raw_dir)
 
 
 @app.command()
