@@ -42,3 +42,19 @@ def test_only_past_data_matters() -> None:
 def test_invalid_inputs(series: pd.Series, lam: float, msg: str) -> None:
     with pytest.raises(ValueError, match=msg):
         ewma_vol(series, lam, 20, 252)
+
+
+def test_vol_series_equals_per_date_recursion() -> None:
+    """The one-pass series is causal: element k equals ewma_vol on closes[: k + 1]."""
+    from minibook.market.vol import ewma_vol_series  # noqa: PLC0415
+
+    prices = closes(list(np.random.default_rng(3).normal(0, 0.01, 120))).to_numpy()  # SYNTHETIC
+    series = ewma_vol_series(prices, 0.94, 60, 252)
+    assert np.all(np.isnan(series[:61]))
+    for k in range(61, prices.size):
+        assert series[k] == ewma_vol(pd.Series(prices[: k + 1]), 0.94, 60, 252)
+    assert np.all(np.isnan(ewma_vol_series(prices[:30], 0.94, 60, 252)))
+    with pytest.raises(ValueError, match="lambda"):
+        ewma_vol_series(prices, 1.5, 60, 252)
+    with pytest.raises(ValueError, match="positive"):
+        ewma_vol_series(np.array([1.0, -1.0, 2.0]), 0.94, 1, 252)

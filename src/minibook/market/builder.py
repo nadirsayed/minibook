@@ -27,6 +27,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+import numpy as np
 import pandas as pd
 
 from minibook.config.settings import Settings
@@ -37,7 +38,7 @@ from minibook.market.bootstrap import bootstrap_par_curve
 from minibook.market.curves import ZeroCurve
 from minibook.market.snapshot import FillRecord, MarketSnapshot, QualityFlag
 from minibook.market.svensson import SvenssonParams, svensson_curve, validation_errors_bp
-from minibook.market.vol import ewma_vol
+from minibook.market.vol import ewma_vol_series
 
 LOG = logging.getLogger(__name__)
 PERCENT = 100.0
@@ -63,6 +64,15 @@ class StaleDataError(MarketDataError):
 
 
 @dataclass(frozen=True)
+class _Series:
+    """One series, sorted by date, for O(log n) as-of lookups."""
+
+    dates: np.ndarray  # datetime64[D], increasing
+    vals: np.ndarray
+    fetched: list[str]
+
+
+@dataclass(frozen=True)
 class _Picked:
     by_series: dict[str, float]
     obs_dates: dict[str, date]
@@ -85,6 +95,9 @@ class SnapshotBuilder:
         self.store = store
         self.s = settings
         self._cache: dict[tuple[str, str], pd.DataFrame] = {}
+        self._series_cache: dict[tuple[str, str], dict[str, _Series]] = {}
+        self._vol_cache: dict[str, np.ndarray] = {}
+        self._fred_index: dict[tuple[date, str], float] | None = None
 
     # ------------------------------------------------------------------ helpers
     def _frame(self, source: str, dataset: str) -> pd.DataFrame:
@@ -92,6 +105,22 @@ class SnapshotBuilder:
         if key not in self._cache:
             self._cache[key] = self.store.load(source, dataset)
         return self._cache[key]
+
+    def _series(self, source: str, dataset: str) -> dict[str, _Series]:
+        key = (source, dataset)
+        if key not in self._series_cache:
+            df = self._frame(source, dataset).sort_values(["series", "obs_date"], kind="stable")
+            out = {}
+            for name, g in df.groupby("series", sort=True):
+                out[str(name)] = _Series(
+                    dates=np.asarray(
+                        pd.to_datetime(g["obs_date"]).to_numpy(), dtype="datetime64[D]"
+                    ),
+                    vals=g["value"].to_numpy(dtype=float),
+                    fetched=[pd.Timestamp(x).isoformat() for x in g["first_fetched_utc"]],
+                )
+            self._series_cache[key] = out
+        return self._series_cache[key]
 
     def _closure_ok(self, cal: Calendar, obs_date: date, target: date) -> bool:
         if not self.s.market.market_closure_exempt:
@@ -109,20 +138,20 @@ class SnapshotBuilder:
         return SOURCE_CALENDARS[(source, dataset)]
 
     def _pick(self, source: str, dataset: str, series: Sequence[str], as_of: date) -> _Picked:
-        df = self._frame(source, dataset)
-        df = df.loc[(df["obs_date"] <= as_of) & df["series"].isin(list(series))]
+        table = self._series(source, dataset)
+        target = np.datetime64(as_of, "D")
         values: dict[str, float] = {}
         obs_dates: dict[str, date] = {}
         fills: list[FillRecord] = []
-        fetched: list[pd.Timestamp] = []
+        fetched: list[str] = []
         for name in series:
-            rows = df.loc[df["series"] == name]
-            if rows.empty:
+            ser = table.get(name)
+            k = -1 if ser is None else int(np.searchsorted(ser.dates, target, side="right")) - 1
+            if ser is None or k < 0:
                 raise MarketDataError(
                     f"{source}/{dataset} {name}: no observation on or before {as_of}"
                 )
-            row = rows.sort_values("obs_date").iloc[-1]
-            obs_date: date = row["obs_date"]
+            obs_date: date = ser.dates[k].astype(date)
             age = (as_of - obs_date).days
             if age > 0:
                 cal = self._calendar(source, dataset, name)
@@ -141,10 +170,10 @@ class SnapshotBuilder:
                 rec = FillRecord(f"{source}/{dataset}", name, as_of, obs_date, age, reason)
                 LOG.warning("forward-fill: %s", rec)
                 fills.append(rec)
-            values[name] = float(row["value"])
+            values[name] = float(ser.vals[k])
             obs_dates[name] = obs_date
-            fetched.append(pd.Timestamp(row["first_fetched_utc"]))
-        return _Picked(values, obs_dates, fills, max(fetched).isoformat())
+            fetched.append(ser.fetched[k])
+        return _Picked(values, obs_dates, fills, max(fetched))
 
     # ------------------------------------------------------------------- curves
     def _eur_curve(self, as_of: date) -> tuple[ZeroCurve, _Picked]:
@@ -174,13 +203,19 @@ class SnapshotBuilder:
         FRED lags Treasury by about one business day, so a missing FRED value is normal and
         not flagged. Only differences above ``treasury.fred_crosscheck_bp`` are flagged.
         """
-        fred = self._frame("fred", "ust_cmt").set_index(["obs_date", "series"])["value"]
+        if self._fred_index is None:
+            f = self._frame("fred", "ust_cmt")
+            self._fred_index = {
+                (d, str(n)): float(v)
+                for d, n, v in zip(f["obs_date"], f["series"], f["value"], strict=True)
+            }
         flags = []
         for label, value in picked.by_series.items():
             obs_date = picked.obs_dates[label]
-            if (obs_date, label) not in fred.index:
+            ref_value = self._fred_index.get((obs_date, label))
+            if ref_value is None:
                 continue
-            ref = float(fred[(obs_date, label)])
+            ref = ref_value
             diff_bp = (value - ref) * BP_PER_PERCENT
             if abs(diff_bp) > self.s.treasury.fred_crosscheck_bp:
                 msg = (
@@ -202,14 +237,22 @@ class SnapshotBuilder:
         self, as_of: date, underlyings: Sequence[str]
     ) -> tuple[dict[str, float], dict[str, float], _Picked]:
         picked = self._pick("equities", "index_close", underlyings, as_of)
-        df = self._frame("equities", "index_close")
+        table = self._series("equities", "index_close")
         v = self.s.market.vol
         vols = {}
         for u in underlyings:
-            closes = df.loc[(df["series"] == u) & (df["obs_date"] <= as_of)].sort_values(
-                "obs_date"
-            )["value"]
-            vols[u] = ewma_vol(closes, v.ewma_lambda, v.warmup_days, v.annualization_days)
+            ser = table[u]
+            if u not in self._vol_cache:
+                self._vol_cache[u] = ewma_vol_series(
+                    ser.vals, v.ewma_lambda, v.warmup_days, v.annualization_days
+                )
+            k = int(np.searchsorted(ser.dates, np.datetime64(as_of, "D"), side="right")) - 1
+            vol = float(self._vol_cache[u][k])
+            if not np.isfinite(vol):
+                raise MarketDataError(
+                    f"{u}: EWMA vol needs {v.warmup_days + 1} returns on or before {as_of}"
+                )
+            vols[u] = vol
         return picked.by_series, vols, picked
 
     # --------------------------------------------------------------------- build

@@ -172,3 +172,22 @@ the fixed order time → rates → FX → spots → vols → other and labels it
 **Alternative (roadmap):** a symmetric, Shapley-style attribution averages each block's
 marginal contribution over all orders (5! = 120 for five blocks, or a sampled subset). It is
 order-independent and splits cross effects evenly, at the cost of many more revaluations.
+
+## 8. VaR and ES
+
+Historical simulation, full revaluation, 1-day horizon, 500 joint scenarios (ADR-023):
+
+    P&L_i  = Σ_instruments [PV(apply(mkt_D, shock_i)) − PV(mkt_D)]          (valuation date D)
+    VaR_99 = −P_(5),   ES_97.5 = −mean(P_(1..13))                           (N = 500)
+
+Standalone VaR/ES use the same scenarios per instrument. Diversification =
+Σ standalone VaR − VaR (may be negative). The five worst scenarios are reported with their
+dates and per-instrument P&L. Index moves are shown as % returns only (ADR-019).
+
+First real run (D = 11 Nov 2026, scenarios 26 Nov 2024 – 11 Nov 2026, owner dividend
+assumptions): VaR99 = EUR 74,139, ES97.5 = EUR 70,730, Σ standalone VaR = EUR 229,244,
+diversification = EUR 155,105. Delta-gamma VaR = EUR 73,782 (0.5% below full revaluation).
+The worst scenario is 2 Oct 2026 (−83,321, mostly the payer swap).
+
+Backtesting (exceptions, Kupiec POF, Basel traffic light) follows ADR-024: with fewer than
+250 observations the report states "insufficient observations (N = x)".

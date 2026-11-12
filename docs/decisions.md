@@ -356,3 +356,33 @@ visible.
   from Tue 10 to Thu 12 Nov over the US holiday of 11 Nov. Proposed fix: in the explain,
   replace theta_1d × Δt with the period theta PV(t−1 rolled to t) + CF − PV(t−1), the
   revaluation "time" step, while still reporting theta_1d per day.
+
+## ADR-023: Historical VaR/ES conventions
+
+- Scenarios: the 500 one-day moves between the 501 consecutive TARGET business days ending
+  at D, each day's snapshot built only from data dated on or before that day. Shocks: zero
+  rate at every curve pillar (EUR 38, USD 12, JPY 12 including the key pillars), absolute;
+  EUR/USD, EUR/JPY and index levels, log; vols, absolute. That is 71 factors, applied jointly
+  to D's snapshot with the valuation date held at D (no theta, no cashflows).
+- VaR99 = −(k-th worst), k = ceil(0.01 N) = 5; ES97.5 = −mean of the worst m = ceil(0.025 N)
+  = 13. `(1 − 0.99) × 500` is 5.000000000000004 in floating point, so the product is rounded
+  to 9 decimals before ceil (otherwise k = 6). A test covers this.
+- ES97.5 can be below VaR99: the confidence levels differ (for a normal, ES97.5 = 2.338σ vs
+  VaR99 = 2.326σ). ES ≥ VaR is asserted only at the same level (brief).
+- Diversification = Σ standalone VaR − total VaR, reported as is, possibly negative (tested
+  with the classic non-subadditive example).
+- Bonus delta-gamma VaR: the P&L-explain formula with Δt = 0 and the Greeks of D, on the same
+  scenarios.
+- Performance: snapshot lookups use per-series sorted arrays with binary search, and the
+  EWMA vol is one causal pass. Results are identical to the earlier pandas implementation
+  (checked on 21 dates, zero difference), at 4.7 ms instead of 104 ms per snapshot. 500
+  scenarios build in ~3 s and revalue in < 1 s.
+
+## ADR-024: Backtesting with few observations (owner, after M5)
+
+The book exists since 2026-11-02, so only ~40 daily observations exist by end-December. The
+Basel traffic light is defined on 250 observations, and Kupiec's POF test has almost no
+power on 40. Both are implemented, but with N < 250 the report shows **"insufficient
+observations (N = x)"** instead of a zone or a test verdict. A misleading green is never
+shown. From N = 250 on, the zone uses the most recent 250 observations. Exceptions are
+P&L_t < −VaR_{t−1}, with P&L the actual P&L of the static book.

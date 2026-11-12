@@ -120,3 +120,18 @@ pnl:
   # Brief: flag a day when |unexplained| > max(5% of |actual|, EUR 1,000).
   unexplained_rel_threshold: 0.05
   unexplained_abs_threshold_eur: 1000.0
+
+var:
+  # Brief: historical simulation, full revaluation, 1-day horizon, 500 joint scenarios.
+  n_scenarios: 500
+  var_confidence: 0.99      # VaR99 = -(ceil(0.01 N)-th worst P&L)
+  es_confidence: 0.975      # ES97.5 = -mean(worst ceil(0.025 N) P&Ls)
+  n_worst: 5                # worst scenarios shown in the report
+backtest:
+  # Basel Committee (1996), "Supervisory framework for the use of backtesting in conjunction
+  # with the internal models approach to market risk capital requirements": 99% VaR over
+  # 250 observations; green 0-4 exceptions, yellow 5-9, red 10 or more.
+  min_observations: 250
+  yellow_from: 5
+  red_from: 10
+  kupiec_significance: 0.05

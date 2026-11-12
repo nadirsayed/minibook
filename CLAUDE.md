@@ -63,6 +63,12 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
     market, and (b) EWMA vol changes are driven by the day's squared return, so vega and
     delta/gamma P&L are not independent (effects on the explain and on the VaR vol shocks).
 
+## Approved owner decisions (round 4, after M5)
+15. **DV01 and key-rate DV01 are central differences** [PV(+1bp) − PV(−1bp)] / 2 (ADR-020).
+16. **Backtesting with N < 250**: show "insufficient observations (N = x)", never a zone or a
+    misleading green (ADR-024).
+17. Step attribution is order-dependent: always state the order; Shapley on the roadmap.
+
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.
 - Forward-fill at most 3 calendar days, logging observation date, age and reason; beyond

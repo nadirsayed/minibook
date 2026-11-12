@@ -251,11 +251,16 @@ class MarketSnapshot:
         items = shocks.items() if isinstance(shocks, Mapping) else shocks
         curves = dict(self.curves)
         fx, spots, vols = dict(self.fx), dict(self.spots), dict(self.vols)
+        # ZeroRate shocks are collected per currency and added to the pillar zeros at once:
+        # a tent on a curve's own pillars moves exactly that pillar, so this equals applying
+        # the tents one by one (VaR applies ~70 of them per scenario).
+        pillar_shocks: dict[str, dict[int, float]] = {}
         for factor, x in items:
             match factor:
                 case ZeroRate(ccy, pillar):
-                    c = curves[ccy]
-                    curves[ccy] = c.shifted(tent(c.times, c.label_index(pillar), x))
+                    idx = curves[ccy].label_index(pillar)
+                    per_ccy = pillar_shocks.setdefault(ccy, {})
+                    per_ccy[idx] = per_ccy.get(idx, 0.0) + x
                 case KeyRate(ccy, pillar):
                     knots = [Tenor.parse(k).years for k in self.key_pillars]
                     curves[ccy] = curves[ccy].shifted(
@@ -271,4 +276,10 @@ class MarketSnapshot:
                     vols[u] = vols[u] + x
                 case _:
                     raise TypeError(f"unknown risk factor {factor!r}")
+        for ccy, by_idx in pillar_shocks.items():
+            c = curves[ccy]
+            zeros = list(c.zeros)
+            for idx, x in by_idx.items():
+                zeros[idx] += x
+            curves[ccy] = ZeroCurve(c.currency, c.times, tuple(zeros), c.labels)
         return replace(self, curves=curves, fx=fx, spots=spots, vols=vols)

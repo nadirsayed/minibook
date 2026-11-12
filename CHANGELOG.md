@@ -5,6 +5,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M6: historical scenarios (500 x 71 factors), full-revaluation VaR99/ES97.5, standalone,
+  diversification, worst scenarios, delta-gamma VaR; backtesting (Kupiec POF, Basel traffic
+  light, "insufficient observations" below 250).
 - M5 P&L explain: actual vs explained per instrument, factor components, breach flag,
   vanna+volga diagnostic with breach notes, revaluation step attribution; fixing service.
 - Owner dividend-yield assumptions (ADR-021).
@@ -27,6 +30,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - CLAUDE.md with standing instructions and owner decisions; docs/data_sources.md.
 
 ### Changed
+- DV01 and key-rate DV01 are central differences (owner).
+- Snapshot builder: indexed as-of lookups and one-pass EWMA (22x faster, identical results).
+- Step attribution accepts any order.
 - Dividend yields moved to `assumptions.dividend_yields` (value, source, date; ADR-019).
 - Market-closure exemption to the 3-day forward-fill limit enabled (ADR-011).
 - USD curve bootstrapped from Treasury (adds 2M and 4M bill pillars); FRED is cross-check.

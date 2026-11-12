@@ -166,6 +166,24 @@ class PnlSettings(_Frozen):
     unexplained_abs_threshold_eur: float = Field(ge=0.0)
 
 
+class VarSettings(_Frozen):
+    """Historical-simulation VaR/ES parameters."""
+
+    n_scenarios: int = Field(gt=0)
+    var_confidence: float = Field(gt=0.0, lt=1.0)
+    es_confidence: float = Field(gt=0.0, lt=1.0)
+    n_worst: int = Field(gt=0)
+
+
+class BacktestSettings(_Frozen):
+    """VaR backtesting: Basel traffic light and Kupiec POF test."""
+
+    min_observations: int = Field(gt=0)
+    yellow_from: int = Field(gt=0)
+    red_from: int = Field(gt=0)
+    kupiec_significance: float = Field(gt=0.0, lt=1.0)
+
+
 class Settings(_Frozen):
     """Root settings model."""
 
@@ -180,6 +198,8 @@ class Settings(_Frozen):
     fx_conventions: dict[str, FxConventionSettings]
     risk: RiskSettings
     pnl: PnlSettings
+    var: VarSettings
+    backtest: BacktestSettings
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:

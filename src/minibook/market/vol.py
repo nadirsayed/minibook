@@ -19,6 +19,31 @@ import numpy as np
 import pandas as pd
 
 
+def ewma_vol_series(
+    prices: np.ndarray, lam: float, warmup: int, annualization: float
+) -> np.ndarray:
+    """Annualized EWMA vol at every close (NaN until ``warmup + 1`` returns exist).
+
+    Element k equals ``ewma_vol(prices[: k + 1], ...)``: the recursion is causal, so a value
+    depends only on closes up to its own date (no look-ahead). One pass instead of one
+    recursion per date.
+    """
+    if not 0.0 < lam < 1.0:
+        raise ValueError(f"lambda must be in (0, 1), got {lam}")
+    p = np.asarray(prices, dtype=float)
+    if np.any(~np.isfinite(p)) or np.any(p <= 0):
+        raise ValueError("closes must be finite and positive")
+    r = np.diff(np.log(p))
+    out = np.full(p.size, np.nan)
+    if r.size < warmup + 1:
+        return out
+    var = float(np.mean(r[:warmup] ** 2))
+    for j in range(warmup, r.size):  # return j belongs to close j + 1
+        var = lam * var + (1.0 - lam) * r[j] * r[j]
+        out[j + 1] = np.sqrt(annualization * var)
+    return out
+
+
 def ewma_vol(closes: pd.Series, lam: float, warmup: int, annualization: float) -> float:
     """Annualized EWMA volatility at the last date of ``closes``.
 

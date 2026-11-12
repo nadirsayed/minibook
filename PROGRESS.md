@@ -65,15 +65,23 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   spot+vol quadratic, rates quadratic. Real run 3-11 Nov: breaches only on options, on
   big-move days, vanna+volga = 90-115% of each breach's unexplained. 186 tests, 98% coverage.
 
+- **Round 4 adjustments**: central DV01 (rates explain now cleanly quadratic, key rates sum
+  to parallel at 1e-6); orderable step attribution + worked example (methodology §7.1);
+  9 Nov FX check: weekend spot-date jump not captured by theta_1d x 3 (ADR-022, fix proposed).
+- **M6 VaR/ES** (`risk/scenarios.py`, `risk/var.py`, `risk/backtest.py`, ADR-023/024): 500 joint
+  scenarios x 71 factors, full revaluation at fixed D, VaR99/ES97.5, standalone,
+  diversification, 5 worst; delta-gamma VaR; Kupiec + traffic light with the small-sample
+  rule. Snapshot builder 22x faster (identical results). Real run 11 Nov: VaR99 74.1k,
+  ES97.5 70.7k, dg-VaR 73.8k; 3.7 s. 204 tests, 97% coverage.
+
 ## Next
-- M6 VaR/ES: 500 joint historical shocks (full revaluation, valuation date fixed), VaR99,
-  ES97.5, standalone and diversification, 5 worst scenarios with dates; Gaussian tests;
-  bonus delta-gamma VaR and backtesting (Kupiec, traffic light).
+- M7 PDF report (<= 5 pages, reportlab + matplotlib): summary, positions (strikes as % of
+  spot), Greeks + KR charts, P&L waterfall with breach notes, VaR histogram/history/worst
+  scenarios, market moves as % returns; footer with sources, timestamps, SHA, vol-proxy and
+  dividend notes; automated check that no index level appears.
 
 ## Open issues (owner)
-1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them as assumptions (value,
-   source, date). Three of four options cannot be priced until then. Until then options
-   cannot be priced in a report (placeholder in tests only). DAX q = 0 (total-return index).
-2. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
+1. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
    Fine for now; a better SX5E close source would remove them.
-3. **GitHub secret** `BOOK_PRIVATE_YAML_B64` to be created by the owner (needed from M8).
+2. **Theta over weekends/holidays** (ADR-022): proposal to use the period theta (1-step
+   revaluation over [t-1, t]) in the explain instead of theta_1d x dt. Owner decision.
