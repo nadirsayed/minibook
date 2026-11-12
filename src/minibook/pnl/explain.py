@@ -157,27 +157,43 @@ def _pv_plus_cash(
     return {i.id: i.pv(market) + cash[i.id] for i in insts}
 
 
+DEFAULT_STEP_ORDER: tuple[Step, ...] = (Step.TIME, Step.RATES, Step.FX, Step.EQUITY, Step.VOL)
+
+
+def _apply_step(market: MarketSnapshot, step: Step, curr: MarketSnapshot) -> MarketSnapshot:
+    """Move one block of inputs of ``market`` to its value in ``curr``."""
+    if step is Step.TIME:
+        return dataclasses.replace(market, as_of=curr.as_of)
+    if step is Step.RATES:
+        return dataclasses.replace(market, curves=curr.curves)
+    if step is Step.FX:
+        return dataclasses.replace(market, fx=curr.fx)
+    if step is Step.EQUITY:
+        return dataclasses.replace(market, spots=curr.spots)
+    if step is Step.VOL:
+        return dataclasses.replace(market, vols=curr.vols)
+    raise ValueError(f"{step} is not an orderable step")
+
+
 def step_attribution(
-    insts: Sequence[Instrument], prev: MarketSnapshot, curr: MarketSnapshot, cash: dict[str, float]
+    insts: Sequence[Instrument],
+    prev: MarketSnapshot,
+    curr: MarketSnapshot,
+    cash: dict[str, float],
+    order: Sequence[Step] = DEFAULT_STEP_ORDER,
 ) -> pd.DataFrame:
-    """Full-revaluation steps (module docstring). Rows: instrument_id, step, value."""
-    s0 = with_todays_fixings(insts, prev)
-    s1 = dataclasses.replace(s0, as_of=curr.as_of)
-    s2 = dataclasses.replace(s1, curves=curr.curves)
-    s3 = dataclasses.replace(s2, fx=curr.fx)
-    s4 = dataclasses.replace(s3, spots=curr.spots)
-    s5 = dataclasses.replace(s4, vols=curr.vols)
-    stages: list[tuple[Step, MarketSnapshot]] = [
-        (Step.TIME, s1),
-        (Step.RATES, s2),
-        (Step.FX, s3),
-        (Step.EQUITY, s4),
-        (Step.VOL, s5),
-        (Step.OTHER, curr),
-    ]
-    previous = _pv_plus_cash(insts, s0, {i.id: 0.0 for i in insts})
+    """Full-revaluation steps in ``order``, then OTHER. Rows: instrument_id, step, value.
+
+    The steps always add up to Actual, but their split depends on ``order`` (path
+    dependence; methodology §7). TIME carries the window's cashflows.
+    """
+    if sorted(order) != sorted(DEFAULT_STEP_ORDER):
+        raise ValueError(f"order must be a permutation of {DEFAULT_STEP_ORDER}")
+    market = with_todays_fixings(insts, prev)
+    previous = _pv_plus_cash(insts, market, {i.id: 0.0 for i in insts})
     rows: list[tuple[str, str, float]] = []
-    for step, market in stages:
+    for step in (*order, Step.OTHER):
+        market = curr if step is Step.OTHER else _apply_step(market, step, curr)
         current = _pv_plus_cash(insts, market, cash)
         rows += [(i.id, step.value, current[i.id] - previous[i.id]) for i in insts]
         previous = current

@@ -59,8 +59,8 @@ class Measure(StrEnum):
     GAMMA_1PCT  G = (0.01 S)^2 V_SS               (Taylor gamma, EUR)
     VEGA_1PT    0.01 V_sigma                       (EUR per +1 vol point)
     THETA_1D    PV(t + 1d) + CF(t, t + 1d] - PV(t) (EUR per calendar day, market constant)
-    DV01        PV(curve + 1bp) - PV(curve)        (parallel, per currency)
-    KR_DV01     PV(curve + 1bp key-rate tent) - PV (per currency and key pillar)
+    DV01        [PV(curve + 1bp) - PV(curve - 1bp)] / 2   (parallel, per currency)
+    KR_DV01     the same with a key-rate tent              (per currency and key pillar)
     DIV_10BP    0.001 V_q                          (EUR per +10bp of dividend yield)
     """
 

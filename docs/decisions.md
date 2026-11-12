@@ -295,9 +295,11 @@ level appears in committed outputs.
 - Analytical where available (options: delta, gamma, vega, dV/dq; FX forwards: delta and
   gamma on EUR/USD and EUR/JPY including the EUR translation), each checked against central
   finite differences (rel 1e-4).
-- DV01 and key-rate DV01: one-sided +1 bp revaluation (brief definition), per currency; FX
-  forwards carry risk in both of their currencies. Key-rate tents add up to the parallel
-  shift (exactly at first order).
+- DV01 and key-rate DV01: **central differences** [PV(+1 bp) − PV(−1 bp)] / 2, reported per
+  +1 bp, per currency (owner, after M5: the brief's one-sided difference carried an
+  O(1 bp) convexity bias). FX forwards carry risk in both of their currencies. Key-rate tents
+  add up to the parallel shift; with central differences the sum matches the parallel DV01
+  to O(bp²) (tested at 1e-6 relative).
 - Theta: PV(t + 1 calendar day) + cashflows in (t, t + 1] − PV(t), "market held constant":
   curves fixed as functions of time to maturity, spots/FX/vols/fixings unchanged. Fixings
   due today are set first (curve proxy). Consequence: FX forward theta includes the jump of
@@ -342,5 +344,15 @@ visible.
   and depends on the order.
 - Convergence (tests): a pure spot move leaves a cubic residual; a joint spot+vol move a
   quadratic one (omitted cross terms), and the diagnostic leaves < 1% of it. A parallel
-  rate move leaves ½ PV'' Δ (Δ − 1 bp), quadratic for Δ ≫ 1 bp: the brief's DV01 is a
-  one-sided 1 bp difference.
+  rate move leaves ½ PV'' Δ², cleanly quadratic from 0.5 bp to 8 bp, since DV01 became a
+  central difference. (With the original one-sided DV01 it was ½ PV'' Δ (Δ − 1 bp), which
+  vanishes at exactly 1 bp.)
+- Step attribution is order-dependent (methodology §7.1, worked example on 9 Nov 2026).
+- **Known gap: theta × Δt over weekends/holidays (owner decision pending).** theta_1d is a
+  one-day roll from t−1. On a Friday, the roll to Saturday keeps the same FX spot value date,
+  so theta_1d × 3 misses the jump of the spot value date over the weekend (and over US/JP
+  holidays), which actual P&L contains. On Mon 9 Nov 2026 this was −412 EUR (EUR/USD 6M,
+  unexplained −468) and −358 EUR (USD/JPY 3M, unexplained −359), with the spot date jumping
+  from Tue 10 to Thu 12 Nov over the US holiday of 11 Nov. Proposed fix: in the explain,
+  replace theta_1d × Δt with the period theta PV(t−1 rolled to t) + CF − PV(t−1), the
+  revaluation "time" step, while still reporting theta_1d per day.

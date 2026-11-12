@@ -7,7 +7,7 @@ Sources of each measure (definitions in :class:`minibook.instruments.base.Measur
 * revaluation, for every instrument:
   - THETA_1D = PV(market rolled 1 day) + cashflows in (t, t+1d] - PV(market), market held
     constant (ADR-020);
-  - DV01 = PV(curve + 1bp) - PV(curve), parallel, for EUR, USD and JPY;
+  - DV01 = [PV(curve + 1bp) - PV(curve - 1bp)] / 2, parallel, for EUR, USD and JPY;
   - KR_DV01 = the same with a key-rate tent at each key pillar.
 
 Rows that are exactly zero (e.g. an option's USD DV01) are omitted.
@@ -66,17 +66,29 @@ def theta(inst: Instrument, market: MarketSnapshot, days: int) -> float:
     return inst.pv(rolled) + paid - inst.pv(market)
 
 
+def central(
+    inst: Instrument, market: MarketSnapshot, shape: KeyRate | Parallel, bump: float
+) -> float:
+    """[PV(+bump) - PV(-bump)] / 2 for a rate bump shape."""
+    return 0.5 * (inst.pv(market.bump(shape, bump)) - inst.pv(market.bump(shape, -bump)))
+
+
 def rate_sensitivities(inst: Instrument, market: MarketSnapshot, bump: float) -> list[GreekRow]:
-    """Parallel DV01 and key-rate DV01 per currency (one-sided +bump, brief definition)."""
-    base = inst.pv(market)
+    """Parallel DV01 and key-rate DV01 per currency, central differences (owner, ADR-020).
+
+        DV01 = [PV(curve + 1bp) - PV(curve - 1bp)] / 2     (EUR per +1bp)
+
+    The central difference has an O(bp^2) error, where the brief's original one-sided
+    difference had an O(bp) convexity bias.
+    """
     rows = []
     for ccy in sorted(market.curves):
-        dv01 = inst.pv(market.bump(Parallel(ccy), bump)) - base
+        dv01 = central(inst, market, Parallel(ccy), bump)
         if dv01 == 0.0:
             continue
         rows.append(GreekRow(inst.id, Measure.DV01, f"PAR:{ccy}", dv01))
         for pillar in market.key_pillars:
-            kr = inst.pv(market.bump(KeyRate(ccy, pillar), bump)) - base
+            kr = central(inst, market, KeyRate(ccy, pillar), bump)
             if kr != 0.0:
                 rows.append(GreekRow(inst.id, Measure.KR_DV01, f"KR:{ccy}:{pillar}", kr))
     return rows

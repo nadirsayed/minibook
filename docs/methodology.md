@@ -131,6 +131,11 @@ option's value depends on the assumption.
 
 The Greeks are from t−1, u = ΔS/S, and Δt is in calendar days (3 over a weekend).
 
+**Weekend value dates (known gap, ADR-022).** theta_1d × Δt uses a one-day roll from t−1.
+For FX forwards, a Friday roll does not move the spot value date, but the real Friday →
+Monday window does. The resulting value-date carry (about −0.4k EUR per forward on 9 Nov
+2026) appears as unexplained P&L. A period-theta fix is proposed.
+
 **What remains unexplained, and why.** Third-order spot terms (cubic in u). The cross and
 convexity terms the formula omits: vanna (spot × vol), volga (vol²), charm (spot × time),
 rate convexity, and spot-date jumps of FX forwards over holidays. With the EWMA proxy the
@@ -144,3 +149,26 @@ First real-data run (3–11 Nov 2026, live cache, owner dividend assumptions): b
 unexplained between −5.4k and +0.9k EUR, against daily actual P&L of 12k–58k EUR. Option
 breaches on 4, 6 and 9 Nov (five instrument-days): the vanna + volga estimate is 90–115% of
 each breaching option's unexplained P&L, leaving remainders of 101–289 EUR.
+
+### 7.1 Step attribution is order-dependent
+
+The revaluation steps move one block of inputs at a time, so each step is valued at
+partly-moved inputs. The steps always add up to Actual, but **the split between steps
+depends on the order**, because cross effects (here spot × vol: vanna) go to whichever step
+comes second. Worked example, Fri 6 → Mon 9 Nov 2026 (live data), equity and vol steps of
+each option in the two orders (EUR):
+
+| Option | Moves (spot, vol) | Equity, spot first | Vol, spot first | Vol, vol first | Equity, vol first |
+|---|---|---|---|---|---|
+| SX5E 100% call | +1.94%, +1.39 pts | +33,556 | +8,048 | +8,217 | +33,388 |
+| DAX 95% put | +1.73%, +0.85 pts | −11,584 | +4,805 | +5,187 | −11,966 |
+| CAC 40 105% call (short) | +1.16%, +0.34 pts | −8,971 | −1,482 | −1,351 | −9,102 |
+| FTSE MIB 90% put | +2.69%, +2.34 pts | −20,928 | +18,741 | +22,151 | −24,338 |
+
+The sum of the two steps is identical in both orders (e.g. −2,187 for the FTSE MIB put), but
+3,410 EUR moves from the spot step to the vol step when the order is swapped. minibook uses
+the fixed order time → rates → FX → spots → vols → other and labels it as such.
+
+**Alternative (roadmap):** a symmetric, Shapley-style attribution averages each block's
+marginal contribution over all orders (5! = 120 for five blocks, or a sampled subset). It is
+order-independent and splits cross effects evenly, at the cost of many more revaluations.

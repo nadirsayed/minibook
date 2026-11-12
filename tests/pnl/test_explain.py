@@ -70,9 +70,10 @@ def test_mixed_moves_have_quadratic_residual(settings: Settings) -> None:
 def test_rates_move_residual_is_second_order(settings: Settings) -> None:
     snap = flat_snapshot().with_fixings({("EURIBOR6M", TRADE): 0.025})
     swap = InterestRateSwap.create("S", TRADE, 10_000_000, 0.03, True)
-    # The brief's DV01 is a one-sided +1bp difference, so for a parallel move of D bp the
-    # residual is ~ 1/2 PV'' D (D - 1bp): zero at exactly 1bp. Use moves well above 1bp.
-    sizes_bp = [5.0, 10.0, 20.0, 40.0]
+    # Central DV01 (ADR-020): the residual of a parallel move of D bp is 1/2 PV'' D^2 + O(D^3),
+    # cleanly quadratic for small moves too (the earlier one-sided DV01 left
+    # 1/2 PV'' D (D - 1bp), which vanished at exactly 1bp).
+    sizes_bp = [0.5, 1.0, 2.0, 4.0, 8.0]
     res = [
         unexplained(snap, snap.bump(Parallel("EUR"), d * 1e-4), settings, swap)[0] for d in sizes_bp
     ]
@@ -173,3 +174,19 @@ def test_fixing_service(tmp_path: Path, trade_snap: MarketSnapshot) -> None:
     assert len(store.load("EURIBOR6M")) == 1
     later = m.roll(1)
     assert record_due_fixings([swap], later, store, at) is later  # nothing due that day
+
+
+def test_step_order_changes_split_not_total(settings: Settings) -> None:
+    from minibook.pnl.explain import step_attribution  # noqa: PLC0415
+
+    snap = flat_snapshot()
+    curr = snap.apply({EquitySpot("SX5E"): float(np.log1p(0.03)), Vol("SX5E"): 0.03})
+    cash = {OPTION.id: 0.0}
+    a = step_attribution([OPTION], snap, curr, cash).set_index("step")["value"]
+    order = (Step.TIME, Step.RATES, Step.FX, Step.VOL, Step.EQUITY)
+    b = step_attribution([OPTION], snap, curr, cash, order).set_index("step")["value"]
+    assert a.sum() == pytest.approx(b.sum(), abs=1e-9)
+    assert a["equity"] + a["vol"] == pytest.approx(b["equity"] + b["vol"], abs=1e-9)
+    assert abs(a["vol"] - b["vol"]) > 1.0  # cross effect moves with the order (vanna)
+    with pytest.raises(ValueError, match="permutation"):
+        step_attribution([OPTION], snap, curr, cash, (Step.TIME,))

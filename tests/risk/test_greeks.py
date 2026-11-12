@@ -153,7 +153,22 @@ def test_dv01_flat_curve_vs_analytic_annuity(settings: Settings) -> None:
         )
         return swap.notional * (math.exp(-z * ts) - math.exp(-z * te) - swap.fixed_rate * fixed)
 
-    assert dv01 == pytest.approx(pv(Z_FLAT + 1e-4) - pv(Z_FLAT), abs=1e-6)
+    assert dv01 == pytest.approx(0.5 * (pv(Z_FLAT + 1e-4) - pv(Z_FLAT - 1e-4)), abs=1e-6)
+    # Analytic derivative of the closed form, times 1bp: the central difference matches it to
+    # O(bp^2) (the one-sided difference was off by 1/2 PV'' bp^2, ~2.5e-4 relative here).
+    ts = year_fraction(TRADE, swap.effective, DayCount.ACT_365F)
+    te = year_fraction(TRADE, swap.maturity, DayCount.ACT_365F)
+    dpv = swap.notional * (-ts * math.exp(-Z_FLAT * ts) + te * math.exp(-Z_FLAT * te))
+    for p in swap.fixed_periods:
+        t = year_fraction(TRADE, p.end, DayCount.ACT_365F)
+        dpv += (
+            swap.notional
+            * swap.fixed_rate
+            * t
+            * math.exp(-Z_FLAT * t)
+            * year_fraction(p.start, p.end, DayCount.THIRTY_360_BOND)
+        )
+    assert dv01 == pytest.approx(dpv * 1e-4, rel=1e-6)
     # (2) Annuity: for a par payer swap PV = A (par - K), so DV01 ~ A * d(par)/dz * 1bp; with
     #     annual coupons on a flat continuous curve par ~ e^z - 1, d(par)/dz = e^z. Residual
     #     (30/360 accruals, bump convexity) is below 1e-3 relative.
@@ -168,8 +183,9 @@ def test_key_rates_add_up_to_parallel(trade_snap: MarketSnapshot, settings: Sett
     rows = rate_sensitivities(swap, snap, settings.risk.rate_bump)
     krs = [r for r in rows if r.measure == Measure.KR_DV01]
     assert {r.risk_factor for r in krs} <= {f"KR:EUR:{k}" for k in KEYS}
-    # Key-rate tents sum to a parallel shift; residual = second-order cross terms (~1e-4).
-    assert sum(r.value for r in krs) == pytest.approx(row(rows, Measure.DV01, "PAR:EUR"), rel=1e-3)
+    # Key-rate tents sum to a parallel shift. With central differences the second-order
+    # cross terms cancel, so the sum matches the parallel DV01 to O(bp^2).
+    assert sum(r.value for r in krs) == pytest.approx(row(rows, Measure.DV01, "PAR:EUR"), rel=1e-6)
     assert all(not r.risk_factor.startswith(("PAR:USD", "PAR:JPY")) for r in rows)
 
 
