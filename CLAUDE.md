@@ -46,8 +46,22 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
    terms forbid download, automated access and AI use, even for personal use.
 9. **JPY below 1Y** is flat (documented limitation; short-end anchor on the roadmap).
 10. **31 Dec 2026 report** published on 5 Jan 2027 if the ECB skips 31 Dec (ADR-007): OK.
-11. **Dividend yields** come from the owner by hand. Until then, a clearly marked
-    placeholder in tests only, never in a report.
+11. **Dividend yields** are owner-provided model assumptions in book.yaml
+    `assumptions.dividend_yields` (value, source, date; ADR-019). Never source SX5E (or any
+    index) yields from stoxx.com. Until provided, a clearly marked placeholder in tests only,
+    never in a report. The report shows each option's q sensitivity (EUR per +10bp).
+
+## Approved owner decisions (2026-11-12, round 3)
+12. **Option A confirmed (ADR-018).** The scheduled workflow restores
+    `config/book.private.yaml` from the GitHub secret `BOOK_PRIVATE_YAML_B64` (base64)
+    before running; `frozen_metadata.private_terms_sha256` verifies it.
+13. **No index levels in anything committed (ADR-019)**, including PDF reports and CSV
+    outputs: strikes as % of trade-date spot, index moves as % returns. PVs, Greeks, P&L and
+    VaR are fine.
+14. **Vol proxy EWMA confirmed.** methodology.md §4 and the report footer must state that
+    (a) realized vol usually sits below implied, so option values are likely understated vs
+    market, and (b) EWMA vol changes are driven by the day's squared return, so vega and
+    delta/gamma P&L are not independent (effects on the explain and on the VaR vol shocks).
 
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.

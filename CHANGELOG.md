@@ -5,6 +5,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M4 Greeks engine: analytical option and FX Greeks, revaluation theta, DV01 and key-rate
+  DV01 per currency, option dividend-yield sensitivity (EUR per +10bp); long-format output.
+- Private option terms digest (`private_terms_sha256`) to detect a wrong secret.
 - M3 pricers: EUR IRS (QuantLib cross-checked), FX forwards with spot-date discounting,
   BSM index options with analytical partials; immutable EURIBOR proxy fixing store;
   config/book.yaml with pydantic models; `minibook init-book` (freeze + verify).
@@ -21,6 +24,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - CLAUDE.md with standing instructions and owner decisions; docs/data_sources.md.
 
 ### Changed
+- Dividend yields moved to `assumptions.dividend_yields` (value, source, date; ADR-019).
 - Market-closure exemption to the 3-day forward-fill limit enabled (ADR-011).
 - USD curve bootstrapped from Treasury (adds 2M and 4M bill pillars); FRED is cross-check.
 - Trade date moved to 2026-11-02 (ADR-004); run schedule Mon–Fri (ADR-001).

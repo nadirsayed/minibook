@@ -47,17 +47,23 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   option strikes from the 2 Nov closes; fixing EURIBOR6M 2026-11-02 = 2.700604%. Re-run
   verifies (idempotent). Option terms in git-ignored config/book.private.yaml (ADR-018). Swap and forwards PV = 0.00 at the trade date. 162 tests, 98%.
 
+- **Owner decisions round 3** (CLAUDE.md 12-14): secret `BOOK_PRIVATE_YAML_B64` + digest
+  check; no index levels in committed outputs; EWMA confirmed and documented
+  (methodology §4); dividend yields as `assumptions` block.
+- **M4 Greeks** (`risk/greeks.py`, ADR-020): analytic option delta/gamma/vega/q-sensitivity
+  and FX delta/gamma (EUR translation included), all vs central FD at rel 1e-4; theta by
+  1-day revaluation with today's fixings set; DV01 and key-rate DV01 for EUR/USD/JPY
+  (DV01 = closed form on flat 2.5%, = annuity·e^z·1bp to 1e-3; key rates sum to parallel).
+  Real-book run 2026-11-11: IRS DV01 +4.2k/bp, EURUSD fwd +49.7k per 1%. 177 tests, 98% coverage.
+
 ## Next
-- M4 Greeks: delta/gamma/vega/theta per brief units, DV01 + key-rate DV01 per currency
-  (FX forwards too), FX risk on EUR/USD and EUR/JPY; every analytical Greek vs central FD;
-  DV01 on synthetic flat 2.5% vs analytic annuity.
+- M5 P&L explain (t-1 -> t): actual vs Greeks-based explained, per instrument, factor
+  attribution, threshold flag, convergence tests; record fixings due each day.
 
 ## Open issues (owner)
-1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them. Three of four options
-   cannot be priced until then. Until then options
+1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them as assumptions (value,
+   source, date). Three of four options cannot be priced until then. Until then options
    cannot be priced in a report (placeholder in tests only). DAX q = 0 (total-return index).
 2. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
    Fine for now; a better SX5E close source would remove them.
-3. **Option terms location** (ADR-018): option strikes/closes are in the git-ignored
-   `config/book.private.yaml` (Yahoo-derived, never committed). Owner to confirm, or allow
-   committing them as trade terms.
+3. **GitHub secret** `BOOK_PRIVATE_YAML_B64` to be created by the owner (needed from M8).

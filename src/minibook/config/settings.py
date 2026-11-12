@@ -150,6 +150,15 @@ class FxConventionSettings(_Frozen):
     settlement_calendars: tuple[str, ...]
 
 
+class RiskSettings(_Frozen):
+    """Sensitivity conventions (brief units)."""
+
+    rate_bump: float = Field(gt=0.0)
+    theta_days: int = Field(gt=0)
+    days_per_year: float = Field(gt=0.0)
+    div_yield_bump: float = Field(gt=0.0)
+
+
 class Settings(_Frozen):
     """Root settings model."""
 
@@ -162,6 +171,7 @@ class Settings(_Frozen):
     equities: EquitySettings
     market: MarketSettings
     fx_conventions: dict[str, FxConventionSettings]
+    risk: RiskSettings
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:

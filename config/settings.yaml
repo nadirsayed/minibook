@@ -105,3 +105,13 @@ market:
 fx_conventions:
   EURUSD: {spot_lag: 2, lag_calendars: [TARGET], settlement_calendars: [TARGET, US-FED]}
   USDJPY: {spot_lag: 2, lag_calendars: [JP], settlement_calendars: [US-FED, JP]}
+
+risk:
+  # Brief units: DV01 = PV(curve + 1bp) - PV(base); key-rate DV01 with the same bump.
+  rate_bump: 1.0e-4
+  # Theta: EUR per calendar day, market held constant (ADR-020).
+  theta_days: 1
+  # Analytic BSM theta is per year (ACT/365F); converted per calendar day.
+  days_per_year: 365.0
+  # Dividend-yield sensitivity reported per +10 bp of q (owner request, ADR-019).
+  div_yield_bump: 1.0e-3

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
-from datetime import date
+from datetime import date, timedelta
 from types import MappingProxyType
 from typing import Any
 
@@ -176,6 +176,14 @@ class MarketSnapshot:
             raise ValueError(f"fixings dated after {self.as_of}: {future}")
         if any(v <= 0 for v in (*self.fx.values(), *self.spots.values(), *self.vols.values())):
             raise ValueError("FX rates, spots and vols must be positive")
+
+    def roll(self, days: int) -> MarketSnapshot:
+        """Return the same market seen ``days`` calendar days later ("market held constant").
+
+        Curves are kept as functions of time to maturity (constant shape); spots, vols, FX and
+        fixings are unchanged. Used for theta.
+        """
+        return replace(self, as_of=self.as_of + timedelta(days=days))
 
     def with_fixings(self, fixings: Mapping[tuple[str, date], float]) -> MarketSnapshot:
         """Return a copy carrying the fixings dated on or before ``as_of``."""

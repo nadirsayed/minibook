@@ -266,5 +266,41 @@ book.yaml. Swap and FX frozen terms, derived from ECB and Treasury data, stay in
 To reproduce, run `minibook fetch` and then `minibook init-book --trade-date 2026-11-02`: the
 same strikes are rebuilt deterministically from the same closes.
 
-**Status.** Implemented 2026-11-12 as the default; awaiting owner confirmation (alternative:
-commit the four trade-date closes as trade terms).
+**Status.** Confirmed by owner 2026-11-12.
+
+**Scheduled runs.** GitHub Actions gets the file from the encrypted secret
+`BOOK_PRIVATE_YAML_B64`: the base64 of `config/book.private.yaml`, decoded to disk before
+`minibook run` (M8 workflow). book.yaml's `frozen_metadata.private_terms_sha256` (a SHA-256
+of the option terms, which reveals nothing about them) makes a wrong or corrupted secret
+fail loudly instead of pricing other strikes. People who clone the repo reproduce the file
+with `minibook fetch` + `minibook init-book`.
+
+## ADR-019: Owner assumptions; no index levels in anything committed
+
+**Dividend yields (owner, 2026-11-12).** SX5E, CAC 40 and FTSE MIB yields are *documented
+model assumptions* provided by the owner, not sourced data (the STOXX terms cover their
+factsheets too). They live in book.yaml under `assumptions.dividend_yields`, each with
+`value`, `source` and `date`. The report shows each option's sensitivity to q (EUR per +10bp,
+`div_10bp`), so the effect of the assumption is visible. ADR-005 (factsheet rule) is
+superseded.
+
+**Committed outputs (owner, 2026-11-12).** The rule of ADR-014/018 applies to everything
+committed, including PDF reports and CSV outputs. Option strikes are shown as % of the
+trade-date spot. Index moves are shown as % returns, never as index levels or level history.
+PVs, Greeks, P&L and VaR (EUR amounts) are fine. M7/M8 add an automated check that no index
+level appears in committed outputs.
+
+## ADR-020: Greek conventions
+
+- Analytical where available (options: delta, gamma, vega, dV/dq; FX forwards: delta and
+  gamma on EUR/USD and EUR/JPY including the EUR translation), each checked against central
+  finite differences (rel 1e-4).
+- DV01 and key-rate DV01: one-sided +1 bp revaluation (brief definition), per currency; FX
+  forwards carry risk in both of their currencies. Key-rate tents add up to the parallel
+  shift (exactly at first order).
+- Theta: PV(t + 1 calendar day) + cashflows in (t, t + 1] − PV(t), "market held constant":
+  curves fixed as functions of time to maturity, spots/FX/vols/fixings unchanged. Fixings
+  due today are set first (curve proxy). Consequence: FX forward theta includes the jump of
+  the spot value date over weekends and holidays (S is held constant while its value date
+  moves), so it is larger before weekends. Actual P&L contains the same effect.
+- The option sensitivity to q is reported as 0.001 · V_q (first order, EUR per +10 bp).

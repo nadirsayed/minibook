@@ -46,7 +46,7 @@ def test_freeze_then_verify(
     # ADR-018: option terms (from equity closes) only in the git-ignored private file.
     private = book_path.with_name("book.private.yaml")
     assert private.exists() and "strike" in private.read_text()
-    options_part = text[text.index("options:") : text.index("dividend_yields:")]
+    options_part = text[text.index("options:") : text.index("assumptions:")]
     assert "strike:" not in options_part and "spot_at_trade" not in options_part
     book = load_book(book_path)
     assert book.is_frozen
@@ -77,13 +77,22 @@ def test_mismatch_and_wrong_date(
     book_path: Path, market_store: RawStore, settings: Settings, tmp_path: Path
 ) -> None:
     run(book_path, market_store, settings, tmp_path)
-    private = book_path.with_name("book.private.yaml")  # option terms live here (ADR-018)
-    text = private.read_text()
+    # Tampered private file (e.g. wrong GitHub secret): caught by the digest on load.
+    private = book_path.with_name("book.private.yaml")
+    original = private.read_text()
     book = load_book(book_path)
     strike = book.options[1].frozen.strike  # type: ignore[union-attr]  # DAX 95%: unique value
-    private.write_text(text.replace(repr(strike), repr(strike + 1.0), 1))
-    with pytest.raises(FrozenTermsMismatchError, match="strike"):
+    private.write_text(original.replace(repr(strike), repr(strike + 1.0), 1))
+    with pytest.raises(ValueError, match="does not match private_terms_sha256"):
+        load_book(book_path)
+    private.write_text(original)
+    # Tampered public term: recomputation disagrees -> explicit mismatch error.
+    rate = book.swaps[0].frozen.fixed_rate  # type: ignore[union-attr]
+    public = book_path.read_text()
+    book_path.write_text(public.replace(repr(rate), repr(rate + 1e-4), 1))
+    with pytest.raises(FrozenTermsMismatchError, match="fixed_rate"):
         run(book_path, market_store, settings, tmp_path)
+    book_path.write_text(public)
     with pytest.raises(ValueError, match=r"differs from book\.yaml"):
         init_book(
             book_path,

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -87,16 +90,18 @@ class OptionSpec(_Model):
 
 
 class DividendYield(_Model):
-    """A trailing dividend yield with its provenance (owner input)."""
+    """An owner-provided dividend-yield assumption (ADR-019)."""
 
     value: float = Field(ge=0, lt=0.2)
-    definition: str | None = None
-    source: str | None = None
-    url: str | None = None
-    data_as_of: date | None = None
-    published: date | None = None
-    look_ahead: bool = False
+    source: str
+    date: date
     note: str | None = None
+
+
+class Assumptions(_Model):
+    """Owner-provided model assumptions."""
+
+    dividend_yields: dict[str, DividendYield | None]
 
 
 type AnySpec = SwapSpec | FxForwardSpec | OptionSpec
@@ -110,7 +115,7 @@ class Book(_Model):
     swaps: tuple[SwapSpec, ...]
     fx_forwards: tuple[FxForwardSpec, ...]
     options: tuple[OptionSpec, ...]
-    dividend_yields: dict[str, DividendYield | None]
+    assumptions: Assumptions
     frozen_metadata: dict[str, object] | None = None
 
     def instruments(self) -> tuple[AnySpec, ...]:
@@ -122,9 +127,9 @@ class Book(_Model):
         ids = [x.id for x in self.instruments()]
         if len(ids) != len(set(ids)):
             raise ValueError(f"duplicate instrument ids: {ids}")
-        missing = {o.underlying for o in self.options} - set(self.dividend_yields)
+        missing = {o.underlying for o in self.options} - set(self.assumptions.dividend_yields)
         if missing:
-            raise ValueError(f"dividend_yields lacks entries for {sorted(missing)}")
+            raise ValueError(f"assumptions.dividend_yields lacks entries for {sorted(missing)}")
         return self
 
     @property
@@ -134,7 +139,7 @@ class Book(_Model):
 
     def available_dividend_yields(self) -> dict[str, float]:
         """Dividend yields that have been provided (None entries are skipped)."""
-        return {k: v.value for k, v in self.dividend_yields.items() if v is not None}
+        return {k: v.value for k, v in self.assumptions.dividend_yields.items() if v is not None}
 
 
 def yaml_round_trip() -> YAML:
@@ -147,6 +152,17 @@ def yaml_round_trip() -> YAML:
 
 
 PRIVATE_SUFFIX = ".private.yaml"
+DIGEST_KEY = "private_terms_sha256"
+
+
+def private_terms_digest(options: Mapping[str, object]) -> str:
+    """SHA-256 of the option frozen terms (canonical JSON). Reveals nothing about them.
+
+    Stored in book.yaml ``frozen_metadata`` so that a wrong or corrupted private file (e.g. a
+    mistyped GitHub secret) is detected instead of silently pricing other strikes.
+    """
+    canonical = json.dumps(options, sort_keys=True, default=str, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def private_path(book_path: Path) -> Path:
@@ -176,6 +192,13 @@ def load_book(path: Path = DEFAULT_BOOK_PATH) -> Book:
             if item.get("frozen") is not None:
                 raise ValueError(f"{item['id']}: option terms must not be in {path.name}")
             item["frozen"] = frozen.get(item["id"])
+        meta = raw.get("frozen_metadata") or {}
+        expected = meta.get(DIGEST_KEY) if isinstance(meta, dict) else None
+        if expected is not None and private_terms_digest(frozen) != expected:
+            raise ValueError(
+                f"{priv.name} does not match {DIGEST_KEY} in {path.name}: wrong or corrupted "
+                "private file (check the BOOK_PRIVATE_YAML_B64 secret)"
+            )
     return Book.model_validate(raw)
 
 

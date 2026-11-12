@@ -10,6 +10,7 @@ Partials (per unit of underlying):
     dV/dS       = phi e^{-qT} N(phi d1)
     d2V/dS2     = e^{-qT} n(d1) / (S sigma sqrt(T))
     dV/dsigma   = S e^{-qT} n(d1) sqrt(T)
+    dV/dq       = -phi T S e^{-qT} N(phi d1)
     theta       = dV/dt = -dV/dT
                 = -S e^{-qT} n(d1) sigma / (2 sqrt(T))
                   + phi [q S e^{-qT} N(phi d1) - r K e^{-rT} N(phi d2)]
@@ -57,6 +58,7 @@ class BsmResult:
     gamma: float
     vega: float
     theta: float
+    dq: float = 0.0
 
 
 def _pdf(x: float) -> float:
@@ -97,7 +99,8 @@ def bsm(
         fwd_value = phi * (spot * df_q - strike * df_r)
         itm = fwd_value > 0
         theta = phi * (q * spot * df_q - r * strike * df_r) if itm else 0.0
-        return BsmResult(max(fwd_value, 0.0), phi * df_q if itm else 0.0, 0.0, 0.0, theta)
+        dq = -phi * t * spot * df_q if itm else 0.0
+        return BsmResult(max(fwd_value, 0.0), phi * df_q if itm else 0.0, 0.0, 0.0, theta, dq)
     d1 = (math.log(spot / strike) + (r - q + 0.5 * sigma * sigma) * t) / sst
     d2 = d1 - sst
     n_d1 = _pdf(d1)
@@ -109,4 +112,5 @@ def bsm(
     theta = -spot * df_q * n_d1 * sigma / (2.0 * math.sqrt(t)) + phi * (
         q * spot * df_q * cdf1 - r * strike * df_r * cdf2
     )
-    return BsmResult(price, delta, gamma, vega, theta)
+    dq = -phi * t * spot * df_q * cdf1
+    return BsmResult(price, delta, gamma, vega, theta, dq)

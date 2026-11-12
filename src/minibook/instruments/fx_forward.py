@@ -31,10 +31,11 @@ from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date
 
+from minibook.config.settings import RiskSettings
 from minibook.dates.calendars import BusinessDayConvention, Calendar
 from minibook.dates.daycount import DayCount, year_fraction
 from minibook.dates.tenor import Tenor, add_tenor
-from minibook.instruments.base import Cashflow, to_eur
+from minibook.instruments.base import Cashflow, GreekRow, Measure, to_eur
 from minibook.market.snapshot import MarketSnapshot
 
 TIME_DC = DayCount.ACT_365F
@@ -98,6 +99,39 @@ class FxForward:
     def pv(self, market: MarketSnapshot) -> float:
         """PV in EUR."""
         return to_eur(self.pv_quote(market), self.quote, market)
+
+    def analytic_greeks(self, market: MarketSnapshot, cfg: RiskSettings) -> list[GreekRow]:
+        """FX delta/gamma on the EUR crosses X_c = EUR/c, including EUR translation.
+
+        With g = [DF_b(T)/DF_b(s)] / [DF_q(T)/DF_q(s)] (curves only) and X_EUR = 1,
+            PV_EUR = N DF_q(T) (g / X_b - K / X_q),
+        so, for a non-EUR base:  V_Xb = -N DF_q g / X_b^2,  V_XbXb = 2 N DF_q g / X_b^3,
+        and for a non-EUR quote: V_Xq =  N DF_q K / X_q^2,  V_XqXq = -2 N DF_q K / X_q^3.
+        Reported as D = 0.01 X V_X and G = (0.01 X)^2 V_XX. No cross-gamma (separable).
+        """
+        del cfg  # FX Greeks are analytic; no bump size needed
+        if market.as_of >= self.delivery:
+            return []
+        t_d = year_fraction(market.as_of, self.delivery, TIME_DC)
+        df_q = float(market.curve(self.quote).df(t_d))
+        x_b, x_q = market.fx_rate("EUR", self.base), market.fx_rate("EUR", self.quote)
+        g = self.forward_rate(market) * x_b / x_q
+        n = self.base_notional
+        rows = []
+        for ccy, x, v1, v2 in (
+            (self.base, x_b, -n * df_q * g / x_b**2, 2.0 * n * df_q * g / x_b**3),
+            (
+                self.quote,
+                x_q,
+                n * df_q * self.strike / x_q**2,
+                -2.0 * n * df_q * self.strike / x_q**3,
+            ),
+        ):
+            if ccy == "EUR":
+                continue
+            rows.append(GreekRow(self.id, Measure.DELTA_1PCT, f"FX:{ccy}", 0.01 * x * v1))
+            rows.append(GreekRow(self.id, Measure.GAMMA_1PCT, f"FX:{ccy}", (0.01 * x) ** 2 * v2))
+        return rows
 
     def cashflows(self, start: date, end: date, market: MarketSnapshot) -> list[Cashflow]:
         """Net settlement N (S_T - K) in quote currency if delivery is in (start, end]."""

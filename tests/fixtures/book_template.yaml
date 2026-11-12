@@ -70,17 +70,19 @@ options:
     multiplier: 2.5            # EUR per index point (Borsa Italiana / IDEM MIBO)
     frozen:
 
-# Trailing dividend yields (decimal). Rule (ADR-005): the latest official factsheet
-# published on or before the trade date. Entered by the owner by hand (provider terms
-# forbid automated access, ADR-002). null = not yet provided: option pricing fails
-# explicitly until it is filled in.
-dividend_yields:
-  SX5E:
-  DAX:
-    value: 0.0
-    definition: total-return index
-    note: >-
-      DAX is a performance (total-return) index: dividends are reinvested in the index,
-      so the index level does not drop on ex-dividend dates and q = 0.
-  CAC40:
-  FTSEMIB:
+# Model assumptions provided by the owner (ADR-019): documented inputs, not sourced
+# automatically (provider terms forbid automated access to index factsheets, ADR-002).
+# Each value carries its source and date. null = not yet provided: option pricing fails
+# explicitly until it is filled in. The report shows each option's sensitivity to q.
+assumptions:
+  dividend_yields:           # continuous dividend yield q (decimal)
+    SX5E:
+    DAX:
+      value: 0.0
+      source: methodology
+      date: 2026-11-02
+      note: >-
+        DAX is a performance (total-return) index: dividends are reinvested in the index,
+        so the index level does not drop on ex-dividend dates and q = 0.
+    CAC40:
+    FTSEMIB:

@@ -13,6 +13,8 @@ from minibook.config.settings import Settings, load_settings
 from minibook.data import ecb, fred, mof, treasury
 from minibook.data.cache import RawStore
 from minibook.data.replay import FixtureClient
+from minibook.market.builder import SnapshotBuilder
+from minibook.market.snapshot import MarketSnapshot
 
 ROOT = Path(__file__).resolve().parents[1]
 HTTP_FIXTURES = ROOT / "tests" / "fixtures" / "http"
@@ -75,3 +77,11 @@ def market_store(tmp_path: Path, settings: Settings, client: FixtureClient) -> R
     mof.fetch_jgb(client, store, settings.mof)
     synthetic_equities(store, list(settings.equities.tickers))
     return store
+
+
+@pytest.fixture
+def trade_snap(market_store: RawStore, settings: Settings) -> MarketSnapshot:
+    """2026-11-02 snapshot: real rates/FX (recorded), SYNTHETIC equities, PLACEHOLDER q."""
+    return SnapshotBuilder(market_store, settings).build(
+        date(2026, 11, 2), PLACEHOLDER_DIV_YIELDS_TESTS_ONLY
+    )

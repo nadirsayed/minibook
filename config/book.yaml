@@ -80,16 +80,23 @@ options:
     strike_pct: 0.90
     multiplier: 2.5            # EUR per index point (Borsa Italiana / IDEM MIBO)
     frozen:
-dividend_yields:
-  SX5E:
-  DAX:
-    value: 0.0
-    definition: total-return index
-    note: >-
-      DAX is a performance (total-return) index: dividends are reinvested in the index,
-      so the index level does not drop on ex-dividend dates and q = 0.
-  CAC40:
-  FTSEMIB:
+
+# Model assumptions provided by the owner (ADR-019): documented inputs, not sourced
+# automatically (provider terms forbid automated access to index factsheets, ADR-002).
+# Each value carries its source and date. null = not yet provided: option pricing fails
+# explicitly until it is filled in. The report shows each option's sensitivity to q.
+assumptions:
+  dividend_yields:           # continuous dividend yield q (decimal)
+    SX5E:
+    DAX:
+      value: 0.0
+      source: methodology
+      date: 2026-11-02
+      note: >-
+        DAX is a performance (total-return) index: dividends are reinvested in the index,
+        so the index level does not drop on ex-dividend dates and q = 0.
+    CAC40:
+    FTSEMIB:
 frozen_metadata:
   by: minibook init-book
   trade_date: 2026-11-02
@@ -102,3 +109,4 @@ frozen_metadata:
     equities/index_close: '2026-11-12T14:18:57.639110+00:00'
   forward_fills: []
   quality_flags: []
+  private_terms_sha256: 96762cd32cfdc73eac7922b594c49d83829d973bd8fe76b2bc45d28e312ebb4a

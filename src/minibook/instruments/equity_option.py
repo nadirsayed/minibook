@@ -24,8 +24,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
+from minibook.config.settings import RiskSettings
 from minibook.dates.daycount import DayCount, year_fraction
-from minibook.instruments.base import Cashflow, PricingError
+from minibook.instruments.base import Cashflow, GreekRow, Measure, PricingError
 from minibook.instruments.bsm import BsmResult, OptionType, bsm
 from minibook.market.snapshot import MarketSnapshot
 
@@ -69,6 +70,28 @@ class EquityOption:
         if market.as_of >= self.expiry:
             return 0.0
         return self.scale * self.unit_result(market).price
+
+    def analytic_greeks(self, market: MarketSnapshot, cfg: RiskSettings) -> list[GreekRow]:
+        """Analytical BSM sensitivities in brief units (EUR); none on or after expiry.
+
+        D = 0.01 S scale V_S, G = (0.01 S)^2 scale V_SS, Vega = 0.01 scale V_sigma,
+        Div = cfg.div_yield_bump scale V_q (first order).
+        """
+        if market.as_of >= self.expiry:
+            return []
+        s = float(market.spots[self.underlying])
+        res = self.unit_result(market)
+        u = self.underlying
+        return [
+            GreekRow(self.id, Measure.DELTA_1PCT, f"EQ:{u}", 0.01 * s * self.scale * res.delta),
+            GreekRow(
+                self.id, Measure.GAMMA_1PCT, f"EQ:{u}", (0.01 * s) ** 2 * self.scale * res.gamma
+            ),
+            GreekRow(self.id, Measure.VEGA_1PT, f"VOL:{u}", 0.01 * self.scale * res.vega),
+            GreekRow(
+                self.id, Measure.DIV_10BP, f"DIV:{u}", cfg.div_yield_bump * self.scale * res.dq
+            ),
+        ]
 
     def cashflows(self, start: date, end: date, market: MarketSnapshot) -> list[Cashflow]:
         """Cash settlement at expiry if the expiry is in (start, end]."""

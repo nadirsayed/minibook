@@ -134,6 +134,18 @@ class InterestRateSwap:
             return stored
         return self.projected_rate(coupon, market)
 
+    def fixings_due(self, market: MarketSnapshot) -> dict[tuple[str, date], float]:
+        """Return fixings dated ``market.as_of`` not yet stored, at their curve proxy.
+
+        On its fixing date a coupon's rate is set from that day's curve (ADR-016). The daily
+        run records these in the fixing store; theta sets them before rolling the market.
+        """
+        return {
+            (self.index, c.fixing_date): self.projected_rate(c, market)
+            for c in self.float_coupons
+            if c.fixing_date == market.as_of and market.fixing(self.index, c.fixing_date) is None
+        }
+
     # ---------------------------------------------------------------- valuation
     def annuity(self, market: MarketSnapshot) -> float:
         """sum_i N tau_i DF(t_i) over unpaid fixed periods (EUR per unit rate)."""

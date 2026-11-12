@@ -26,12 +26,14 @@ from pathlib import Path
 from ruamel.yaml.comments import CommentedMap
 
 from minibook.config.book import (
+    DIGEST_KEY,
     Book,
     FxFrozen,
     OptionFrozen,
     SwapFrozen,
     load_book,
     private_path,
+    private_terms_digest,
     yaml_round_trip,
 )
 from minibook.config.settings import Settings
@@ -173,6 +175,7 @@ def _write(path: Path, terms: FrozenTerms, snap: MarketSnapshot, recorded_at: da
                 for f in snap.fills
             ],
             "quality_flags": [f"{q.code}: {q.message}" for q in snap.quality_flags],
+            DIGEST_KEY: private_terms_digest({k: v.model_dump() for k, v in terms.options.items()}),
         }
     )
     with path.open("w", encoding="utf-8") as fh:
