@@ -101,3 +101,23 @@ Both points (a) and (b) are repeated in the report footer.
 Definitions and units are in `minibook.instruments.base.Measure` and ADR-020. Sign
 convention: every number is the EUR change in PV for an *increase* of the factor (+1% spot or
 FX rate EUR/ccy, +1 vol point, +1 bp rate, +10 bp dividend yield, +1 calendar day).
+
+## 6. Dividends: flat yield vs seasonality
+
+The options use a constant continuous dividend yield q over their life (owner assumptions,
+ADR-021). In reality, European index dividends are paid at discrete ex-dates that
+concentrate in **April–May**. A flat annual q spreads the expected dividends evenly over the
+year, so:
+
+- **3M options (Nov 2026 – Feb 2027)** fall mostly *outside* the dividend season. A flat q
+  charges about a quarter of a year of dividends that will largely not be paid, which
+  **overstates** expected dividends (forward too low: calls undervalued, puts overvalued).
+- **6M options (Nov 2026 – May 2027)** span the spring season. Most of the year's dividends
+  fall inside their life, but a flat q charges only about half a year's worth, which
+  **understates** expected dividends (forward too high: puts undervalued, calls overvalued).
+
+The DAX is a total-return index (q = 0), so it is not affected. Desks instead use discrete
+dividend forecasts (amount and ex-date per constituent, or index-point forecasts) or
+listed **dividend futures** (e.g. on the EURO STOXX 50) to build the implied dividend
+curve. This is on the roadmap. The report's `div_10bp` sensitivity shows how much each
+option's value depends on the assumption.

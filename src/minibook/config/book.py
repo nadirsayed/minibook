@@ -95,6 +95,7 @@ class DividendYield(_Model):
     value: float = Field(ge=0, lt=0.2)
     source: str
     date: date
+    look_ahead: bool = False
     note: str | None = None
 
 

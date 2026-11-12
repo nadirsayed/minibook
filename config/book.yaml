@@ -87,7 +87,15 @@ options:
 # explicitly until it is filled in. The report shows each option's sensitivity to q.
 assumptions:
   dividend_yields:           # continuous dividend yield q (decimal)
+    # SX5E, CAC40, FTSEMIB: owner assumptions for trade date 2026-11-02, from sources
+    # consulted 2026-11-12, i.e. 10 days after the trade date: slight look-ahead (ADR-021).
     SX5E:
+      value: 0.026
+      source: >-
+        Owner assumption. iShares Core EURO STOXX 50 UCITS ETF Dist (IE0008471009) trailing
+        distribution yield 2.47-2.60% across data providers; 2026 distributions ~2.83%.
+      date: 2026-11-12
+      look_ahead: true
     DAX:
       value: 0.0
       source: methodology
@@ -96,7 +104,20 @@ assumptions:
         DAX is a performance (total-return) index: dividends are reinvested in the index,
         so the index level does not drop on ex-dividend dates and q = 0.
     CAC40:
+      value: 0.030
+      source: >-
+        Owner assumption. Amundi CAC 40 UCITS ETF Dist (FR0007052782) trailing yield ~2.72%
+        (EUR 2.32 paid Dec 2025) before its 0.25% TER; press puts the Paris market yield at
+        3.3-3.7%.
+      date: 2026-11-12
+      look_ahead: true
     FTSEMIB:
+      value: 0.039
+      source: >-
+        Owner assumption. 2026 consensus index dividend yield (Milano Finanza, July 2026);
+        Amundi FTSE MIB ETF trailing 3.70% (Apr 2026).
+      date: 2026-11-12
+      look_ahead: true
 frozen_metadata:
   by: minibook init-book
   trade_date: 2026-11-02

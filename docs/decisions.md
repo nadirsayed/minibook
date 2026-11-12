@@ -304,3 +304,23 @@ level appears in committed outputs.
   the spot value date over weekends and holidays (S is held constant while its value date
   moves), so it is larger before weekends. Actual P&L contains the same effect.
 - The option sensitivity to q is reported as 0.001 · V_q (first order, EUR per +10 bp).
+
+## ADR-021: Dividend-yield assumptions (owner, 2026-11-12)
+
+**Decision.** Continuous annual dividend yields for the trade date 2026-11-02, provided by the
+owner as model assumptions and stored in `assumptions.dividend_yields`:
+
+| Index | q | Basis (owner) |
+|---|---|---|
+| SX5E | 2.6% | iShares Core EURO STOXX 50 UCITS ETF Dist (IE0008471009) trailing distribution yield 2.47-2.60% across data providers; 2026 distributions ~2.83% |
+| CAC 40 | 3.0% | Amundi CAC 40 UCITS ETF Dist (FR0007052782) trailing ~2.72% (EUR 2.32 paid Dec 2025) before its 0.25% TER; press: Paris market yield 3.3-3.7% |
+| FTSE MIB | 3.9% | 2026 consensus index dividend yield (Milano Finanza, July 2026); Amundi FTSE MIB ETF trailing 3.70% (Apr 2026) |
+| DAX | 0% | Total-return index (methodology) |
+
+**Look-ahead (flagged).** The sources were consulted on 2026-11-12, ten days after the trade
+date. Each entry carries `look_ahead: true`, and the report shows the flag. The effect is
+small (trailing yields move slowly), but it is not strictly point-in-time.
+
+**Model limitation.** A flat annual q ignores dividend seasonality; see methodology §6.
+Each option's sensitivity to q (EUR per +10 bp) is reported, so the assumption's weight is
+visible.

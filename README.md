@@ -33,5 +33,7 @@ Details and terms of use: [docs/data_sources.md](docs/data_sources.md).
   wired in). Candidate: an official overnight or bill rate with terms that allow
   automated use.
 - Implied-volatility source that allows automated use, replacing the EWMA proxy.
+- Discrete dividends: replace the flat dividend yield q with discrete dividend forecasts
+  (ex-dates concentrated in April-May) or a dividend curve implied from dividend futures.
 
 License: MIT.
