@@ -108,3 +108,65 @@ JST on the next business day (04hf.htm).
 that maturity, and bootstrap to continuous zero rates. This is an approximation: a
 constant-maturity yield read off a curve of issue yields is not exactly a par yield.
 Documented as a limitation.
+
+**Short end.** MoF publishes nothing below 1Y. JPY zero rates below 1Y are flat-extrapolated
+from the 1Y zero, and the 3M/6M key pillars are inserted at that flat value. This mainly
+affects the 3M USD/JPY forward. Limitation: no JPY money-market data. The fallback in the
+brief (BoJ policy rate) covers only an MoF outage, not this gap.
+
+## ADR-009: Curve representation and the EUR pillar grid
+
+**Decision.**
+- Every curve is a `ZeroCurve`: continuously compounded zero rates on pillars, DF = e^{-z t},
+  linear in z between pillars, flat outside. Linear-in-zero is the brief's choice. It is
+  simple, local (a pillar shock moves the curve only between its neighbours) and
+  bump-friendly. Its known weakness is saw-tooth forwards.
+- Time t is ACT/365F from the valuation date; pillar times are nominal (3M = 0.25). The
+  ECB Svensson maturity m is set to t.
+- The key-rate pillars (3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y) are inserted into every curve. A
+  key-rate shift is then a tent in t with knots on pillars, so the shifted curve equals
+  z(t) + tent(t) everywhere, and the key-rate tents add up exactly to a parallel shift.
+- EUR is sampled from Svensson on 38 pillars: monthly to 1Y, quarterly to 3Y, semi-annual
+  to 10Y, then 12/15/20/30Y. The coarser grids tested had larger worst-case errors
+  (measured 2026-11-12 over the 881 curves of 2023-06-01..2026-11-11, t in [1M, 10.5Y]):
+  8 key pillars 40.6 bp; 19 pillars 2.7 bp; 32 pillars quarterly to 3Y 2.5 bp (short-end
+  hump on 2023-09-01). Chosen grid: **0.54 bp**. These pillars are also the EUR VaR risk
+  factors.
+
+## ADR-010: USD Treasury bills (1M, 3M, 6M) in the bootstrap
+
+**Context.** Treasury CMT yields are bond-equivalent yields. Bills pay no coupon.
+
+**Decision.** 1M, 3M and 6M are simple yields: DF(T) = 1/(1 + yT), T = 1/12, 0.25, 0.5. From
+1Y on, each quote is the par yield of a semi-annual coupon bond on a regular 0.5-year grid.
+The 52-week bill is treated as a 1Y par bond. Simplification: nominal times, no actual
+bill day counts or settlement dates.
+
+## ADR-011: Market-closure exemption to the 3-day forward-fill limit
+
+**Context.** On the live cache, a strict 3-day rule fails on 9 TARGET business days of the
+VaR window. All of them are JGB data during official Japanese market closures: 2024-01-02/03,
+2024-05-06, 2025-01-03, 2025-05-06, 2026-05-05/06, 2026-09-22/23. Ages are 4–5 days. With a
+strict rule those snapshots cannot be built, which breaks the 500-day joint history.
+
+**Proposal.** `market.market_closure_exempt: true` allows an older observation only when
+*every* weekday since it is a holiday of that source's own market calendar. When the market
+is closed, its last close is the current value. The fill is still logged with age and
+reason. With the exemption, 0 stale days remain in 2023-06..2026-11. Any other gap, such as
+a failed publication, still fails explicitly.
+
+**Status.** Implemented, but **off by default** (brief rule). Owner decision needed before
+M6 (VaR).
+
+## ADR-012: FRED is one business day late for the D+1 run
+
+**Evidence.** At 13:20 UTC on 2026-11-12, FRED's latest DGS observation was 2026-11-09,
+while the U.S. Treasury par-yield CSV already had 2026-11-10 (the values for 2026-11-09
+match). FRED republishes the Fed's H.15 release, which comes out the business day after the
+observation. At the ~13:00 CET D+1 run, the USD curve for D would therefore usually come
+from D-1 (a 1-day forward-fill on almost every report).
+
+**Proposal.** Fetch the Treasury "Daily Treasury Par Yield Curve Rates" CSV (original source,
+U.S. government work) as the primary USD source, and keep FRED as a cross-check.
+
+**Status.** Owner decision needed (the brief names FRED).

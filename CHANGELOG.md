@@ -5,6 +5,10 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M2: TARGET/US/JP calendars, day counts, tenors, schedules; ZeroCurve with key-rate
+  tents; ECB Svensson EUR curve with validation; USD/JPY par-to-zero bootstrap; EWMA vol
+  proxy; immutable MarketSnapshot with risk factors and bumps; SnapshotBuilder with
+  forward-fill log and staleness checks (market-closure exemption, off by default).
 - M1 data layer: HTTP client with retry/backoff; raw payload archive and parquet store
   with fetch timestamps, revision log and `as_of` filtering; ECB, FRED, MoF and yfinance
   fetchers; record/replay fixtures; `minibook fetch` command.

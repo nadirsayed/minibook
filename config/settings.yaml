@@ -53,3 +53,33 @@ equities:
   # calculation hours 09:00-18:00 CET); 18:30 leaves a 30-minute margin for vendor delay.
   close_cutoff_local: "18:30"
   timezone: Europe/Berlin
+
+market:
+  # Brief: forward-fill at most 3 calendar days, then fail explicitly.
+  max_ffill_days: 3
+  # If true, a longer gap is allowed when every weekday in it is a holiday of the source's
+  # own market calendar (e.g. Japanese Golden Week). Brief default: false. See ADR-011.
+  market_closure_exempt: false
+  # Brief: Svensson rebuild must match ECB published spot rates to <= 0.1 bp.
+  svensson_tolerance_bp: 0.1
+  # Key-rate DV01 pillars (brief). Added to every curve as pillars (ADR-009).
+  key_pillars: [3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y]
+  # EUR Svensson sampling grid: monthly to 1Y, quarterly to 3Y, semi-annual to 10Y.
+  # Max |linear interpolation - Svensson| over 2023-06-01..2026-11-11, t in [1M, 10.5Y]:
+  # 0.54 bp (measured 2026-11-12, ADR-009).
+  eur_pillars: [1M, 2M, 3M, 4M, 5M, 6M, 7M, 8M, 9M, 10M, 11M, 1Y, 15M, 18M, 21M, 2Y, 27M,
+                30M, 33M, 3Y, 42M, 4Y, 54M, 5Y, 66M, 6Y, 78M, 7Y, 90M, 8Y, 102M, 9Y, 114M,
+                10Y, 12Y, 15Y, 20Y, 30Y]
+  usd:
+    # Treasury bills: bond-equivalent simple yields (ADR-010).
+    money_market: [1M, 3M, 6M]
+    coupon_frequency: 2
+  jpy:
+    # MoF constant-maturity yields used for the curve (book needs <= 10Y).
+    tenors: [1Y, 2Y, 3Y, 4Y, 5Y, 6Y, 7Y, 8Y, 9Y, 10Y]
+    coupon_frequency: 2
+  vol:
+    # EWMA realized-vol proxy (ADR-002): RiskMetrics lambda for daily data.
+    ewma_lambda: 0.94
+    warmup_days: 60
+    annualization_days: 252

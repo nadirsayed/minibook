@@ -96,6 +96,41 @@ class EquitySettings(_Frozen):
     timezone: str
 
 
+class UsdCurveSettings(_Frozen):
+    """USD Treasury CMT bootstrap inputs."""
+
+    money_market: tuple[str, ...]
+    coupon_frequency: int = Field(gt=0)
+
+
+class JpyCurveSettings(_Frozen):
+    """JPY MoF constant-maturity bootstrap inputs."""
+
+    tenors: tuple[str, ...]
+    coupon_frequency: int = Field(gt=0)
+
+
+class VolSettings(_Frozen):
+    """EWMA realized-vol proxy parameters."""
+
+    ewma_lambda: float = Field(gt=0.0, lt=1.0)
+    warmup_days: int = Field(gt=0)
+    annualization_days: float = Field(gt=0.0)
+
+
+class MarketSettings(_Frozen):
+    """Snapshot construction: forward-fill policy, curve grids, vol proxy."""
+
+    max_ffill_days: int = Field(ge=0)
+    market_closure_exempt: bool
+    svensson_tolerance_bp: float = Field(gt=0.0)
+    key_pillars: tuple[str, ...]
+    eur_pillars: tuple[str, ...]
+    usd: UsdCurveSettings
+    jpy: JpyCurveSettings
+    vol: VolSettings
+
+
 class Settings(_Frozen):
     """Root settings model."""
 
@@ -105,6 +140,7 @@ class Settings(_Frozen):
     fred: FredSettings
     mof: MofSettings
     equities: EquitySettings
+    market: MarketSettings
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:
@@ -132,6 +168,7 @@ __all__ = [
     "EquitySettings",
     "FredSettings",
     "HttpSettings",
+    "MarketSettings",
     "MofSettings",
     "Settings",
     "load_settings",
