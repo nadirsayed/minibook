@@ -121,3 +121,26 @@ dividend forecasts (amount and ex-date per constituent, or index-point forecasts
 listed **dividend futures** (e.g. on the EURO STOXX 50) to build the implied dividend
 curve. This is on the roadmap. The report's `div_10bp` sensitivity shows how much each
 option's value depends on the assumption.
+
+## 7. P&L explain
+
+    Actual      = PV_t(mkt_t) − PV_{t−1}(mkt_{t−1}) + CF(t−1, t]
+    Explained   = Σ [D_1% (u/0.01) + ½ G_1% (u/0.01)²]   (equity spots, EUR/USD, EUR/JPY)
+                + Σ Vega_1pt (Δσ/0.01) + Theta_1d Δt + Σ_ccy Σ_k KR_DV01_k Δr_k(bp)
+    Unexplained = Actual − Explained
+
+The Greeks are from t−1, u = ΔS/S, and Δt is in calendar days (3 over a weekend).
+
+**What remains unexplained, and why.** Third-order spot terms (cubic in u). The cross and
+convexity terms the formula omits: vanna (spot × vol), volga (vol²), charm (spot × time),
+rate convexity, and spot-date jumps of FX forwards over holidays. With the EWMA proxy the
+vol change is itself driven by u² (§4), so vanna and volga are *systematically* large on
+big-move days. The report therefore shows, next to each instrument's unexplained P&L, the
+vanna + volga estimate and the remainder. For each breach of
+max(5% |Actual|, EUR 1,000) it adds a note and the full-revaluation step attribution
+(time → rates → FX → spots → vols → other).
+
+First real-data run (3–11 Nov 2026, live cache, owner dividend assumptions): book
+unexplained between −5.4k and +0.9k EUR, against daily actual P&L of 12k–58k EUR. Option
+breaches on 4, 6 and 9 Nov (five instrument-days): the vanna + volga estimate is 90–115% of
+each breaching option's unexplained P&L, leaving remainders of 101–289 EUR.

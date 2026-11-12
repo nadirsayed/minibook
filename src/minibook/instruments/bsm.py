@@ -11,6 +11,8 @@ Partials (per unit of underlying):
     d2V/dS2     = e^{-qT} n(d1) / (S sigma sqrt(T))
     dV/dsigma   = S e^{-qT} n(d1) sqrt(T)
     dV/dq       = -phi T S e^{-qT} N(phi d1)
+    vanna       = d2V/dS dsigma = -e^{-qT} n(d1) d2 / sigma
+    volga       = d2V/dsigma2   = S e^{-qT} n(d1) sqrt(T) d1 d2 / sigma
     theta       = dV/dt = -dV/dT
                 = -S e^{-qT} n(d1) sigma / (2 sqrt(T))
                   + phi [q S e^{-qT} N(phi d1) - r K e^{-rT} N(phi d2)]
@@ -59,6 +61,8 @@ class BsmResult:
     vega: float
     theta: float
     dq: float = 0.0
+    vanna: float = 0.0
+    volga: float = 0.0
 
 
 def _pdf(x: float) -> float:
@@ -113,4 +117,6 @@ def bsm(
         q * spot * df_q * cdf1 - r * strike * df_r * cdf2
     )
     dq = -phi * t * spot * df_q * cdf1
-    return BsmResult(price, delta, gamma, vega, theta, dq)
+    vanna = -df_q * n_d1 * d2 / sigma
+    volga = vega * d1 * d2 / sigma
+    return BsmResult(price, delta, gamma, vega, theta, dq, vanna, volga)

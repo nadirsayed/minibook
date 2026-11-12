@@ -93,6 +93,22 @@ class EquityOption:
             ),
         ]
 
+    def omitted_second_order(self, prev: MarketSnapshot, curr: MarketSnapshot) -> float:
+        """Second-order terms the brief's explain omits, from the t-1 Greeks (EUR).
+
+            scale * [vanna dS dsigma + 1/2 volga dsigma^2]
+
+        A diagnostic for unexplained P&L: with the EWMA vol proxy, dsigma is driven by the
+        day's squared return, so these terms are large on big-move days (methodology §4).
+        """
+        if prev.as_of >= self.expiry:
+            return 0.0
+        res = self.unit_result(prev)
+        u = self.underlying
+        ds = float(curr.spots[u]) - float(prev.spots[u])
+        dv = float(curr.vols[u]) - float(prev.vols[u])
+        return self.scale * (res.vanna * ds * dv + 0.5 * res.volga * dv * dv)
+
     def cashflows(self, start: date, end: date, market: MarketSnapshot) -> list[Cashflow]:
         """Cash settlement at expiry if the expiry is in (start, end]."""
         if not start < self.expiry <= end:

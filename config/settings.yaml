@@ -115,3 +115,8 @@ risk:
   days_per_year: 365.0
   # Dividend-yield sensitivity reported per +10 bp of q (owner request, ADR-019).
   div_yield_bump: 1.0e-3
+
+pnl:
+  # Brief: flag a day when |unexplained| > max(5% of |actual|, EUR 1,000).
+  unexplained_rel_threshold: 0.05
+  unexplained_abs_threshold_eur: 1000.0

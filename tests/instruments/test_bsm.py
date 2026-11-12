@@ -68,6 +68,15 @@ def test_greeks_match_central_differences(x: tuple[float, ...], kind: OptionType
     assert res.gamma == pytest.approx(fd_gamma, rel=1e-4, abs=1e-6)
     assert res.vega == pytest.approx(fd_vega, rel=1e-4, abs=1e-6)
     assert res.theta == pytest.approx(fd_theta, rel=1e-4, abs=1e-5)
+    fd_vanna = (
+        bsm(s + hs, k, t, r, q, v + hv, kind).price
+        - bsm(s + hs, k, t, r, q, v - hv, kind).price
+        - bsm(s - hs, k, t, r, q, v + hv, kind).price
+        + bsm(s - hs, k, t, r, q, v - hv, kind).price
+    ) / (4 * hs * hv)
+    fd_volga = (price(sigma=v + hv) - 2 * res.price + price(sigma=v - hv)) / hv**2
+    assert res.vanna == pytest.approx(fd_vanna, rel=1e-4, abs=1e-5)
+    assert res.volga == pytest.approx(fd_volga, rel=1e-4, abs=1e-3)
 
 
 def test_matches_quantlib_analytic_engine() -> None:

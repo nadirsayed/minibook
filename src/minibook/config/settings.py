@@ -159,6 +159,13 @@ class RiskSettings(_Frozen):
     div_yield_bump: float = Field(gt=0.0)
 
 
+class PnlSettings(_Frozen):
+    """P&L explain breach threshold: |unexplained| > max(rel * |actual|, abs)."""
+
+    unexplained_rel_threshold: float = Field(ge=0.0)
+    unexplained_abs_threshold_eur: float = Field(ge=0.0)
+
+
 class Settings(_Frozen):
     """Root settings model."""
 
@@ -172,6 +179,7 @@ class Settings(_Frozen):
     market: MarketSettings
     fx_conventions: dict[str, FxConventionSettings]
     risk: RiskSettings
+    pnl: PnlSettings
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:

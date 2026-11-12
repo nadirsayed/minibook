@@ -56,9 +56,19 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   (DV01 = closed form on flat 2.5%, = annuity·e^z·1bp to 1e-3; key rates sum to parallel).
   Real-book run 2026-11-11: IRS DV01 +4.2k/bp, EURUSD fwd +49.7k per 1%. 177 tests, 98% coverage.
 
+- **Dividend assumptions** (owner): SX5E 2.6%, CAC 40 3.0%, FTSE MIB 3.9%, look-ahead flagged
+  (ADR-021); seasonality limitation in methodology §6; roadmap item.
+- **M5 P&L explain** (`pnl/explain.py`, ADR-022): actual (with cashflows) vs Greeks-based
+  explained per instrument; factor components; flag at max(5%, EUR 1k); vanna+volga
+  diagnostic and breach notes; exact revaluation step attribution; `fixing_service.py`
+  records each day's due fixings (also used by init-book). Convergence: spot-only cubic,
+  spot+vol quadratic, rates quadratic. Real run 3-11 Nov: breaches only on options, on
+  big-move days, vanna+volga = 90-115% of each breach's unexplained. 186 tests, 98% coverage.
+
 ## Next
-- M5 P&L explain (t-1 -> t): actual vs Greeks-based explained, per instrument, factor
-  attribution, threshold flag, convergence tests; record fixings due each day.
+- M6 VaR/ES: 500 joint historical shocks (full revaluation, valuation date fixed), VaR99,
+  ES97.5, standalone and diversification, 5 worst scenarios with dates; Gaussian tests;
+  bonus delta-gamma VaR and backtesting (Kupiec, traffic light).
 
 ## Open issues (owner)
 1. **Dividend yields** (SX5E, CAC 40, FTSE MIB): owner sends them as assumptions (value,

@@ -5,6 +5,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M5 P&L explain: actual vs explained per instrument, factor components, breach flag,
+  vanna+volga diagnostic with breach notes, revaluation step attribution; fixing service.
+- Owner dividend-yield assumptions (ADR-021).
 - M4 Greeks engine: analytical option and FX Greeks, revaluation theta, DV01 and key-rate
   DV01 per currency, option dividend-yield sensitivity (EUR per +10bp); long-format output.
 - Private option terms digest (`private_terms_sha256`) to detect a wrong secret.

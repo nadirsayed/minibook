@@ -324,3 +324,23 @@ small (trailing yields move slowly), but it is not strictly point-in-time.
 **Model limitation.** A flat annual q ignores dividend seasonality; see methodology §6.
 Each option's sensitivity to q (EUR per +10 bp) is reported, so the assumption's weight is
 visible.
+
+## ADR-022: P&L explain conventions and breach diagnostics
+
+- Actual = PV_t(mkt_t) − PV_{t−1}(mkt_{t−1}) + cashflows in (t−1, t] (brief). Fixings due on
+  t−1 are set on mkt_{t−1} first (curve proxy), as the daily run records them.
+- Explained uses the t−1 Greeks exactly as in the brief. Rate moves are zero-rate changes at
+  the key-pillar times, on a time-to-maturity grid (consistent with "market held constant"
+  theta). The parallel DV01 is not used (the key rates span it), and q is held constant.
+- Unexplained is additive per instrument; the factor table splits only the explained part.
+- **Diagnostics, not part of Explained:** for options, `omitted_2nd_order` = vanna ΔS Δσ +
+  ½ volga Δσ² from t−1 (analytic BSM). On real data (Nov 2026), the vanna + volga estimate
+  was 90–115% of each breaching option's unexplained P&L (remainders 101–289 EUR). This is expected with the EWMA proxy, whose vol jumps on
+  big spot days (methodology §4). Each flagged row gets a plain-words `note`.
+- **Step attribution (bonus):** full revaluation, moving time (with cashflows), rates, FX,
+  spots, vols, then other, in that order. It adds up exactly to Actual (checked at 1e-6 EUR)
+  and depends on the order.
+- Convergence (tests): a pure spot move leaves a cubic residual; a joint spot+vol move a
+  quadratic one (omitted cross terms), and the diagnostic leaves < 1% of it. A parallel
+  rate move leaves ½ PV'' Δ (Δ − 1 bp), quadratic for Δ ≫ 1 bp: the brief's DV01 is a
+  one-sided 1 bp difference.

@@ -41,13 +41,13 @@ from minibook.data.fixings import FixingRecord, FixingStore
 from minibook.data.http import utc_now
 from minibook.dates.calendars import CALENDARS, BusinessDayConvention
 from minibook.dates.tenor import Tenor, add_tenor
+from minibook.fixing_service import due_fixing_records
 from minibook.instruments.factory import fx_convention, make_swap
 from minibook.instruments.fx_forward import FxForward
 from minibook.market.snapshot import MarketSnapshot
 
 LOG = logging.getLogger(__name__)
 VERIFY_RTOL = 1e-12
-FIXING_METHOD = "EUR AAA curve ACT/360 forward over the accrual period (proxy, ADR-016)"
 
 
 class FrozenTermsMismatchError(RuntimeError):
@@ -77,20 +77,7 @@ def compute_frozen_terms(
         swaps[spec.id] = SwapFrozen(
             fixed_rate=swap.par_rate(snap), effective=swap.effective, maturity=swap.maturity
         )
-        for c in swap.float_coupons:
-            if c.fixing_date == snap.as_of:
-                fixings.append(
-                    FixingRecord(
-                        index=spec.index,
-                        fixing_date=c.fixing_date,
-                        rate=swap.projected_rate(c, snap),
-                        accrual_start=c.period.start,
-                        accrual_end=c.period.end,
-                        curve_as_of=snap.as_of,
-                        method=FIXING_METHOD,
-                        recorded_at_utc=recorded_at.isoformat(),
-                    )
-                )
+        fixings += due_fixing_records([swap], snap, recorded_at)
     fx: dict[str, FxFrozen] = {}
     for f in book.fx_forwards:
         conv = fx_convention(settings, f.pair)
