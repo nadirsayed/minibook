@@ -6,7 +6,7 @@ import math
 
 import pytest
 import QuantLib as ql
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from minibook.instruments.bsm import OptionType, bsm
@@ -47,6 +47,7 @@ def test_put_call_parity(x: tuple[float, ...]) -> None:
 
 @settings(max_examples=200)
 @given(inputs, st.sampled_from([CALL, PUT]))
+@example((141.0, 127.0, 0.25, 0.0, 0.0, 0.0546875), CALL)  # CI failure (volga step)
 def test_greeks_match_central_differences(x: tuple[float, ...], kind: OptionType) -> None:
     s, k, t, r, q, v = x
     res = bsm(s, k, t, r, q, v, kind)
@@ -74,7 +75,11 @@ def test_greeks_match_central_differences(x: tuple[float, ...], kind: OptionType
         - bsm(s - hs, k, t, r, q, v + hv, kind).price
         + bsm(s - hs, k, t, r, q, v - hv, kind).price
     ) / (4 * hs * hv)
-    fd_volga = (price(sigma=v + hv) - 2 * res.price + price(sigma=v - hv)) / hv**2
+    # A second difference amplifies rounding error by ~eps * V / h^2, so volga needs a larger
+    # vol step than vega (CI case S=141, K=127, T=0.25, sigma=5.5%: h = 1e-4 sigma gave a
+    # 3e-4 relative error, while the analytic value matches a 60-digit reference to 1e-14).
+    hv2 = 1e-3 * v
+    fd_volga = (price(sigma=v + hv2) - 2 * res.price + price(sigma=v - hv2)) / hv2**2
     assert res.vanna == pytest.approx(fd_vanna, rel=1e-4, abs=1e-5)
     assert res.volga == pytest.approx(fd_volga, rel=1e-4, abs=1e-3)
 
