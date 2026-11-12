@@ -1,0 +1,86 @@
+[project]
+name = "minibook"
+version = "0.1.0"
+description = "A mini multi-asset derivatives book: daily valuation, Greeks, P&L explain, historical VaR/ES and a PDF risk report from real public market data."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "nadirsayed" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "pandas>=2.2",
+    "pyarrow>=16",
+    "requests>=2.32",
+    "yfinance>=0.2.40",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "matplotlib>=3.9",
+    "reportlab>=4.2",
+]
+
+[project.scripts]
+minibook = "minibook.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pre-commit>=3.7",
+    "pandas-stubs>=2.2",
+    "types-requests>=2.32",
+    "types-PyYAML>=6.0",
+    "QuantLib>=1.34",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RUF", "PL", "NPY", "PD", "D"]
+ignore = [
+    "PLR0913",  # pricers legitimately take many market inputs
+    "PLR0917",
+    "PLR2004",  # magic-number rule is enforced by review + config, not by this lint
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "PLR2004", "S101"]
+"scripts/**" = ["D", "PLR0915"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["yfinance.*", "reportlab.*", "QuantLib.*", "scipy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["network: hits the network (never run in CI)"]
+
+[tool.coverage.run]
+source = ["minibook"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
