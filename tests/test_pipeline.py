@@ -68,6 +68,8 @@ def test_run_produces_every_output(env: tuple[Settings, Path], market_store: Raw
     res = run(date(2026, 11, 4), s, book, clock=lambda: datetime(2026, 11, 5, 12, tzinfo=UTC))
     assert sorted(p.name for p in res.out_dir.iterdir()) == sorted(OUTPUT_FILES)
     assert (s.pipeline.reports_dir / "2026-11-04.pdf").read_bytes() == res.report.read_bytes()
+    index = (s.pipeline.reports_dir / "README.md").read_text()
+    assert "| [2026-11-04](2026-11-04.pdf) |" in index and "VaR 99%" in index
     assert 1 <= len(PdfReader(str(res.report)).pages) <= 5
     pnl = pd.read_csv(res.out_dir / "pnl_explain.csv")
     assert {"actual", "explained", "unexplained", "flagged", "theta", "rates"} <= set(pnl.columns)
