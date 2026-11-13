@@ -448,3 +448,32 @@ without it.
 **Options for the owner:** (a) keep as is; (b) cross-check against an independent AAA
 source (e.g. the Bundesbank's Bund curve, terms to be checked first); (c) add a report flag
 for scenarios whose AAA vs all-ratings spread shock exceeds k σ, without altering them.
+
+## ADR-027: Daily pipeline, outputs and schedule
+
+- **One date** (`minibook run --date D`): snapshots of D and the previous TARGET day P
+  (fixings due on P and D recorded from their own curves), explain P → D, Greeks and
+  VaR/ES of D. VaR history and backtest are read from earlier outputs. Writes
+  `output/D/` {valuations.csv, greeks.csv, pnl_explain.csv, var_es.json, report.pdf,
+  run_metadata.json} and `reports/D.pdf`. Re-running rewrites byte-identical data outputs;
+  only run_metadata carries the wall-clock time. 4.5–8 s per date on cached data (Nov 2026).
+- **Outputs are committed** (owner rule: no index levels anywhere). The daily job needs the
+  history of VaR and P&L, and a fresh runner has none. Every text output passes the
+  index-level guard. The raw market data stays out of git, in the Actions cache.
+- **Guard calibration (evidence).** A strict scan of the Nov 2026 outputs found one
+  integer-form match: an EUR amount of 8,048 (a step attribution) equal to a rounded index
+  close of 8,047.69. This confirms that the run-time guard must check decimal forms only, as
+  whole numeric tokens. Integer forms are checked in tests on synthetic levels.
+- **Schedule** (`.github/workflows/daily.yml`): hourly UTC triggers 11:05–17:05 Mon–Fri.
+  `minibook daily` acts only inside 13:00–18:00 Europe/Berlin (CET/CEST handled by
+  zoneinfo) on TARGET days. It catches up every TARGET day after the trade date without a
+  report, oldest first. A day is ready when the ECB curve for it is stored or a later curve
+  exists (the ECB skipped it, ADR-007). Otherwise exit 75 and the next trigger retries. The
+  private option terms come from the `BOOK_PRIVATE_YAML_B64` secret and are checked against
+  the committed digest. Outputs are committed by `github-actions[bot]` and the PDFs are
+  uploaded as artifacts.
+- **Retrospective fetch disclosure**: a report is flagged as backfilled when any data used
+  for D was first fetched after D's next TARGET business day.
+- **Known risk**: Yahoo Finance may throttle GitHub-hosted runners. A failed equity fetch
+  does not stop the run, but stale closes beyond the forward-fill rules make it fail
+  explicitly (no silent fill). The workflow can be re-run by hand (`workflow_dispatch`).

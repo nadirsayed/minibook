@@ -9,7 +9,7 @@ import yaml
 from typer.testing import CliRunner
 
 from minibook import __version__, cli
-from minibook.cli import NOT_IMPLEMENTED_EXIT, app
+from minibook.cli import app
 from minibook.data.replay import FixtureClient
 from tests.conftest import HTTP_FIXTURES, ROOT
 
@@ -32,11 +32,6 @@ def test_help_lists_commands() -> None:
 def test_bad_date_rejected() -> None:
     result = runner.invoke(app, ["run", "--date", "2026-13-01"])
     assert result.exit_code != 0
-
-
-def test_unimplemented_commands_exit_explicitly() -> None:
-    result = runner.invoke(app, ["run", "--date", "2026-12-01"])
-    assert result.exit_code == NOT_IMPLEMENTED_EXIT
 
 
 def _settings_with_raw_dir(tmp_path: Path) -> Path:
@@ -83,3 +78,11 @@ def test_fetch_reports_failed_source(tmp_path: Path, monkeypatch: pytest.MonkeyP
         app, ["fetch", "--start", "2026-10-26", "--end", "2026-11-06", "--settings", str(path)]
     )
     assert result.exit_code == 1
+
+
+def test_run_reports_stale_market_data_cleanly(tmp_path: Path) -> None:
+    """An empty market-data store: a clean error and exit status 1, not a traceback."""
+    path = _settings_with_raw_dir(tmp_path)
+    result = runner.invoke(app, ["run", "--date", "2026-12-01", "--settings", str(path)])
+    assert result.exit_code == 1
+    assert isinstance(result.exception, SystemExit)

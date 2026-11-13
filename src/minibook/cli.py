@@ -8,31 +8,32 @@ fetch      Download and cache raw market data.
 run        Value the book, compute Greeks, P&L explain, VaR/ES and the PDF for one date.
 backfill   Run ``run`` over a range of TARGET business days.
 
-All commands are idempotent. Commands not yet implemented exit with status 2.
+All commands are idempotent.
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
 from datetime import date, datetime
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
-from minibook import __version__
+from minibook import __version__, pipeline
 from minibook.config.book import DEFAULT_BOOK_PATH
 from minibook.config.settings import DEFAULT_SETTINGS_PATH, Settings, load_settings
-from minibook.data import ecb, equities, fred, mof, treasury
+from minibook.daily import daily
+from minibook.data import equities
 from minibook.data.cache import RawStore
 from minibook.data.fixings import FixingStore
 from minibook.data.http import HttpClient, RequestsClient
+from minibook.dates.calendars import TARGET
+from minibook.fetching import fetch_all
 from minibook.init_book import init_book
-from minibook.market.builder import SnapshotBuilder
+from minibook.market.builder import MarketDataError, SnapshotBuilder
 
 LOG = logging.getLogger(__name__)
-NOT_IMPLEMENTED_EXIT = 2
 
 app = typer.Typer(
     name="minibook",
@@ -51,11 +52,6 @@ def _parse_date(value: str) -> date:
 
 
 DateOpt = Annotated[date, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")]
-
-
-def _not_implemented(command: str, milestone: str) -> None:
-    LOG.error("'%s' is not implemented yet (planned in %s).", command, milestone)
-    raise typer.Exit(code=NOT_IMPLEMENTED_EXIT)
 
 
 def _version_callback(value: bool) -> None:
@@ -110,57 +106,83 @@ EQUITY_HISTORY: equities.HistoryFn = equities.yfinance_history
 def fetch(
     start: Annotated[date | None, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")] = None,
     end: Annotated[date | None, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")] = None,
+    full: Annotated[bool, typer.Option("--full", help="Re-fetch from data.history_start.")] = False,
     settings_path: Annotated[Path, typer.Option("--settings")] = DEFAULT_SETTINGS_PATH,
 ) -> None:
-    """Download and cache raw market data for [START, END].
+    """Download market data for [START, END] (END defaults to today) into the local cache.
 
-    START defaults to ``data.history_start`` and END to today. Every source is attempted.
-    If any source fails, the failures are listed and the command exits with status 1.
+    Without START the fetch is incremental: each source restarts a few days before its last
+    stored observation (``--full``: from data.history_start). Every source is attempted;
+    failures are listed and the exit status is 1.
     """
     s = load_settings(settings_path)
-    start = start or s.data.history_start
-    end = end or date.today()
-    client = make_client(s)
     store = RawStore(s.data.raw_dir)
-    jobs: dict[str, Callable[[], object]] = {
-        "ecb.yield_curve": lambda: ecb.fetch_yield_curve(client, store, s.ecb, start, end),
-        "ecb.fx": lambda: ecb.fetch_fx(client, store, s.ecb, start, end),
-        "ecb.estr": lambda: ecb.fetch_estr(client, store, s.ecb, start, end),
-        "treasury.par_curve": lambda: treasury.fetch_par_curve(
-            client, store, s.treasury, start, end
-        ),
-        "fred.ust_cmt": lambda: fred.fetch_ust_cmt(client, store, s.fred, start, end),
-        "mof.jgb_cm": lambda: mof.fetch_jgb(client, store, s.mof),
-        "equities.index_close": lambda: equities.fetch_index_closes(
-            EQUITY_HISTORY, store, s.equities, start, end
-        ),
-    }
-    failures = []
-    for name, job in jobs.items():
-        LOG.info("fetching %s for %s..%s", name, start, end)
-        try:
-            job()
-        except Exception:
-            LOG.exception("fetch %s failed", name)
-            failures.append(name)
+    failures = fetch_all(
+        make_client(s),
+        store,
+        s,
+        end or date.today(),
+        EQUITY_HISTORY,
+        start=s.data.history_start if full else start,
+    )
     if failures:
         LOG.error("failed sources: %s", ", ".join(failures))
         raise typer.Exit(code=1)
     LOG.info("all sources fetched into %s", s.data.raw_dir)
 
 
-@app.command()
-def run(
+@app.command("run")
+def run_cmd(
     run_date: Annotated[date, typer.Option("--date", parser=_parse_date, metavar="YYYY-MM-DD")],
+    settings_path: Annotated[Path, typer.Option("--settings")] = DEFAULT_SETTINGS_PATH,
+    book_path: Annotated[Path, typer.Option("--book")] = DEFAULT_BOOK_PATH,
 ) -> None:
-    """Produce every output for one TARGET business day."""
-    _not_implemented("run", "M8")
+    """Produce every output for one TARGET business day from the cached data."""
+    s = load_settings(settings_path)
+    try:
+        res = pipeline.run(run_date, s, book_path, settings_path)
+    except (pipeline.PipelineError, MarketDataError) as exc:
+        LOG.error("%s", exc)
+        raise typer.Exit(code=1) from exc
+    LOG.info("outputs in %s (%.1fs)", res.out_dir, res.seconds)
 
 
 @app.command()
 def backfill(
     start: Annotated[date, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")],
     end: Annotated[date, typer.Option(parser=_parse_date, metavar="YYYY-MM-DD")],
+    settings_path: Annotated[Path, typer.Option("--settings")] = DEFAULT_SETTINGS_PATH,
+    book_path: Annotated[Path, typer.Option("--book")] = DEFAULT_BOOK_PATH,
 ) -> None:
-    """Run every TARGET business day in [START, END]."""
-    _not_implemented("backfill", "M8")
+    """Run every TARGET business day in [START, END], oldest first (idempotent).
+
+    Backfilled reports disclose that their data was fetched after the report date.
+    """
+    s = load_settings(settings_path)
+    for d in TARGET.business_days_between(start, end):
+        try:
+            res = pipeline.run(d, s, book_path, settings_path)
+        except (pipeline.PipelineError, MarketDataError) as exc:
+            LOG.error("%s: %s", d, exc)
+            raise typer.Exit(code=1) from exc
+        LOG.info("%s done (%.1fs)", d, res.seconds)
+
+
+@app.command("daily")
+def daily_cmd(
+    settings_path: Annotated[Path, typer.Option("--settings")] = DEFAULT_SETTINGS_PATH,
+    book_path: Annotated[Path, typer.Option("--book")] = DEFAULT_BOOK_PATH,
+    ignore_window: Annotated[bool, typer.Option("--ignore-window")] = False,
+) -> None:
+    """Scheduled job: fetch, then produce every due report whose ECB curve is published.
+
+    Exit status ``pipeline.not_ready_exit_code`` (75) when a due report must wait for the
+    ECB; the workflow treats it as "retry at the next trigger", not as a failure.
+    """
+    s = load_settings(settings_path)
+    done, ready = daily(
+        s, book_path, make_client(s), EQUITY_HISTORY, settings_path, ignore_window=ignore_window
+    )
+    LOG.info("produced: %s", [str(d) for d in done] or "nothing")
+    if not ready:
+        raise typer.Exit(code=s.pipeline.not_ready_exit_code)

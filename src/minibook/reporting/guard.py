@@ -12,6 +12,7 @@ tests check integer forms too, on synthetic levels chosen not to collide.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 
 
@@ -30,9 +31,13 @@ def level_forms(level: float, integers: bool = False) -> set[str]:
 def find_levels(
     texts: Iterable[str], levels: Iterable[float], integers: bool = False
 ) -> list[tuple[str, str]]:
-    """Return (form, text) pairs for every forbidden form found in ``texts``."""
-    forms = {f for lv in levels for f in level_forms(lv, integers)}
-    return [(f, t) for t in texts for f in sorted(forms) if f in t]
+    """Return (form, text) pairs for every forbidden form found in ``texts``.
+
+    Forms are matched as whole numeric tokens: "8233" inside "48233.12" is not a match.
+    """
+    forms = sorted({f for lv in levels for f in level_forms(lv, integers)})
+    patterns = [(f, re.compile(rf"(?<![\d.,]){re.escape(f)}(?![\d]|[.,]\d)")) for f in forms]
+    return [(f, t) for t in texts for f, pat in patterns if pat.search(t)]
 
 
 def check_no_levels(texts: Iterable[str], levels: Iterable[float]) -> None:

@@ -5,6 +5,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M8: `minibook run --date`, `backfill`, `daily` (scheduled catch-up with ECB readiness
+  check), incremental `fetch`; daily GitHub Actions workflow; committed outputs and reports.
 - Seeded bootstrap confidence intervals for VaR99 and ES97.5 (shown in the report).
 - M7 PDF report (<= 5 pages): summary, positions, Greeks + key-rate charts, P&L waterfall
   with breach notes and step attribution, VaR/ES histogram and history, worst scenarios,

@@ -140,3 +140,17 @@ backtest:
   yellow_from: 5
   red_from: 10
   kupiec_significance: 0.05
+
+pipeline:
+  output_dir: output        # output/YYYY-MM-DD/: CSV, JSON, PDF (committed: no index levels)
+  reports_dir: reports      # reports/YYYY-MM-DD.pdf (committed)
+  # Incremental fetch: re-read this many calendar days before the last stored observation
+  # (catches late revisions; the store logs any revision).
+  fetch_lookback_days: 14
+  # Daily schedule (ADR-001): Mon-Fri, ~13:00-18:00 Europe/Berlin; cron is UTC, so the job
+  # is triggered hourly and checks the local window itself.
+  timezone: Europe/Berlin
+  window_start_local: "13:00"
+  window_end_local: "18:00"
+  # Exit code when today's report cannot be produced yet (ECB curve not published).
+  not_ready_exit_code: 75

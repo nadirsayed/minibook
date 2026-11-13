@@ -133,6 +133,14 @@ def fetch_index_closes(
                 "value": done[CLOSE_COLUMN].astype("float64").to_numpy(),
             }
         ).dropna(subset=["value"])
+        bad = obs["value"] <= 0
+        if bad.any():  # Yahoo can publish a zero close for an unfinished day
+            LOG.warning(
+                "%s: dropping non-positive closes on %s",
+                label,
+                [str(d) for d in obs.loc[bad, "obs_date"]],
+            )
+            obs = obs.loc[~bad]
         if not obs.empty:
             store.upsert(SOURCE, DATASET, obs, fetched_at, payload)
         frames.append(obs)

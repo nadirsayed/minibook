@@ -87,11 +87,16 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   -467.5 -> -55.5 and -359.3 -> -0.9 EUR); worst scenario 2 Oct investigated (ADR-026,
   kept); seeded bootstrap 90% CIs for VaR99/ES97.5 (VaR noisier: 21% vs 17% width).
 
+- **M8 pipeline** (`pipeline.py`, `daily.py`, `fetching.py`, CLI run/backfill/daily/fetch,
+  `.github/workflows/daily.yml`, ADR-027): 6 outputs per date + reports/ copy, all text
+  outputs guarded; incremental fetch; catch-up schedule with ECB readiness and exit 75;
+  backfill 3-11 Nov 2026 done (4.5-8 s per date). 218 tests.
+
 ## Next
-- M8 pipeline + CLI `run --date` / `backfill`: outputs (valuations.csv, greeks.csv,
-  pnl_explain.csv, var_es.json, report.pdf, run_metadata.json) with the index-level guard
-  on CSVs too; VaR history from previous outputs; daily GitHub Actions workflow (Mon-Fri,
-  CET/CEST, retries, BOOK_PRIVATE_YAML_B64 secret, reports/ commit); < 60 s per run.
+- Watch the first scheduled runs (Yahoo on GitHub runners, Actions cache, bot commits).
+- M9: README for hiring managers (pitch, badges, report screenshot, latest PDF link,
+  quickstart, mermaid diagram, methodology, sign conventions, what the tests prove,
+  limitations, roadmap), docs polish, v1.0.0 tag by 2026-12-31.
 
 ## Open issues (owner)
 1. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".

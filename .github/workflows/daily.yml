@@ -1,0 +1,82 @@
+name: Daily report
+
+# ADR-001/027: the report for D is produced on the next TARGET business day once the ECB has
+# published the curve for D (~12:00 CET). Cron runs in UTC: hourly triggers at :05 from
+# 11:05 to 17:05 UTC cover 13:00-18:00 Europe/Berlin in both CET (UTC+1) and CEST (UTC+2).
+# `minibook daily` checks the local window and the TARGET calendar itself, does nothing when
+# everything is up to date, and catches up on any missing day in order.
+on:
+  schedule:
+    - cron: "5 11-17 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --locked --python 3.12
+
+      # Raw market data is never committed (ADR-006/014); it lives in the Actions cache.
+      - name: Restore market-data cache
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+          restore-keys: raw-
+
+      # Option terms derived from index closes are not in the repository (ADR-018).
+      - name: Restore private option terms
+        env:
+          BOOK_PRIVATE_YAML_B64: ${{ secrets.BOOK_PRIVATE_YAML_B64 }}
+        run: |
+          test -n "$BOOK_PRIVATE_YAML_B64" || { echo "::error::secret BOOK_PRIVATE_YAML_B64 missing"; exit 1; }
+          printf '%s' "$BOOK_PRIVATE_YAML_B64" | base64 -d > config/book.private.yaml
+          uv run python -c "from minibook.config.book import load_book; assert load_book().is_frozen"
+
+      - name: Fetch and produce due reports
+        run: |
+          set +e
+          uv run minibook daily ${{ github.event_name == 'workflow_dispatch' && '--ignore-window' || '' }}
+          code=$?
+          set -e
+          if [ "$code" -eq 75 ]; then
+            echo "::notice::ECB curve not published yet; the next hourly trigger retries."
+            exit 0
+          fi
+          exit "$code"
+
+      - name: Upload reports as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ github.run_id }}
+          path: reports/*.pdf
+          if-no-files-found: ignore
+
+      - name: Commit outputs
+        run: |
+          rm -f config/book.private.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output reports data/fixings
+          if git diff --cached --quiet; then
+            echo "No new outputs."
+            exit 0
+          fi
+          git commit -m "chore(reports): daily risk report $(date -u +%Y-%m-%d)"
+          git pull --rebase
+          git push

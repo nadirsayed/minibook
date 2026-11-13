@@ -187,6 +187,18 @@ class BacktestSettings(_Frozen):
     kupiec_significance: float = Field(gt=0.0, lt=1.0)
 
 
+class PipelineSettings(_Frozen):
+    """Daily pipeline: output locations, incremental fetch, schedule window."""
+
+    output_dir: Path
+    reports_dir: Path
+    fetch_lookback_days: int = Field(ge=0)
+    timezone: str
+    window_start_local: time
+    window_end_local: time
+    not_ready_exit_code: int
+
+
 class Settings(_Frozen):
     """Root settings model."""
 
@@ -203,6 +215,7 @@ class Settings(_Frozen):
     pnl: PnlSettings
     var: VarSettings
     backtest: BacktestSettings
+    pipeline: PipelineSettings
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:
