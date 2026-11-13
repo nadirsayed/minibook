@@ -30,6 +30,20 @@ The code, the tests and the first drafts of the documentation were written with
 from the specification and the standing instructions in [CLAUDE.md](CLAUDE.md).
 The git history attributes its work: as author up to M6, as co-author from M7 on.
 
+## Daily reports
+
+A risk report is produced for every TARGET business day after the trade date (2 November
+2026). It runs on the next TARGET business day, once the ECB has published its yield curve
+for the day (around noon CET); the scheduled GitHub Actions workflow "Daily report" retries
+every hour until 18:00 CET.
+
+- PDF reports, one per valuation date: [reports/](reports/)
+- Data outputs (valuations, Greeks, P&L explain, VaR/ES, run metadata): [output/](output/)
+
+Reports produced after the fact (backfills) say so in their notes. No committed file shows an
+index level: option strikes appear as a percentage of the trade-date spot, index moves as
+returns.
+
 ## Data sources and attribution
 
 - Euro area yield curve (Svensson parameters), euro foreign exchange reference rates, €STR:
