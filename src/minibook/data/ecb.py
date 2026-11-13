@@ -150,6 +150,17 @@ def fetch_fx(
     return _fetch(client, store, settings, "fx", settings.fx.flow, labels, start, end)
 
 
+def fetch_rating_curves(
+    client: HttpClient, store: RawStore, settings: EcbSettings, start: date, end: date
+) -> pd.DataFrame:
+    """Fetch AAA and all-ratings published spot rates (series ``AAA:SR_5Y``, ``ALL:SR_5Y``)."""
+    rc = settings.rating_curves
+    labels = {
+        f"{prefix}.{t}": f"{name}:{t}" for name, prefix in rc.prefixes.items() for t in rc.tenors
+    }
+    return _fetch(client, store, settings, "rating_curves", rc.flow, labels, start, end)
+
+
 def fetch_estr(
     client: HttpClient, store: RawStore, settings: EcbSettings, start: date, end: date
 ) -> pd.DataFrame:

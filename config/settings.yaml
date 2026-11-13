@@ -29,6 +29,12 @@ ecb:
     flow: EXR
     # ECB reference rates: units of currency per 1 EUR.
     keys: {USD: D.USD.EUR.SP00.A, JPY: D.JPY.EUR.SP00.A}
+  rating_curves:
+    # Published spot rates of the AAA and all-ratings euro area curves, used only by the
+    # scenario artefact detector (owner decision after M8, ADR-028).
+    flow: YC
+    prefixes: {AAA: B.U2.EUR.4F.G_N_A.SV_C_YM, ALL: B.U2.EUR.4F.G_N_C.SV_C_YM}
+    tenors: [SR_2Y, SR_5Y, SR_10Y]
   estr:
     flow: EST
     key: B.EU000A2X2A25.WT
@@ -132,6 +138,13 @@ var:
   bootstrap_resamples: 2000
   bootstrap_seed: 20261102
   bootstrap_ci: 0.90
+  # Scenario artefact detector (owner, ADR-028): flag a scenario day when the AAA minus
+  # all-ratings spot-rate gap moves by more than sigma_threshold standard deviations at a
+  # pillar and at least reversal_fraction of that move reverses within reversal_days
+  # business days. Flags are reported; scenarios are never removed.
+  artefact_sigma_threshold: 5.0
+  artefact_reversal_days: 2
+  artefact_reversal_fraction: 0.5
 backtest:
   # Basel Committee (1996), "Supervisory framework for the use of backtesting in conjunction
   # with the internal models approach to market risk capital requirements": 99% VaR over

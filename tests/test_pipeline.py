@@ -15,7 +15,7 @@ import yaml
 from pypdf import PdfReader
 from typer.testing import CliRunner
 
-from minibook import cli
+from minibook import cli, pipeline
 from minibook.config.settings import Settings
 from minibook.daily import daily, due_dates, in_window, is_ready
 from minibook.data.cache import RawStore
@@ -73,6 +73,8 @@ def test_run_produces_every_output(env: tuple[Settings, Path], market_store: Raw
     assert {"actual", "explained", "unexplained", "flagged", "theta", "rates"} <= set(pnl.columns)
     var = json.loads((res.out_dir / "var_es.json").read_text())
     assert var["n_scenarios"] == 5 and var["var_ci"] is not None
+    assert var["artefact_checked"] and var["scenario_flags"] == []  # recorded ECB data
+    assert var["var_ex_flagged"] is None
     meta = json.loads((res.out_dir / "run_metadata.json").read_text())
     assert meta["as_of"] == "2026-11-04" and meta["git_sha"] and meta["config_hash"]
     assert meta["backtest_status"] == "insufficient observations (N = 0)"
@@ -176,3 +178,10 @@ def test_cli_run_and_daily_exit_codes(
     )
     wait = runner.invoke(cli.app, ["daily", "--settings", str(settings_file), "--book", str(book)])
     assert wait.exit_code == s.pipeline.not_ready_exit_code, wait.output
+
+
+def test_scenario_check_skipped_without_rating_curves(
+    settings: Settings, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    assert pipeline._scenario_flags(RawStore(tmp_path), settings, date(2026, 11, 4)) is None
+    assert "scenario artefact check skipped" in caplog.text

@@ -92,6 +92,10 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   outputs guarded; incremental fetch; catch-up schedule with ECB readiness and exit 75;
   backfill 3-11 Nov 2026 done (4.5-8 s per date). 218 tests.
 
+- **M8 review (owner, 2026-11-13)**: 2 Oct kept; automated artefact flag (ADR-028, ECB
+  all-ratings spot rates, only 2 Oct flagged on 11 Nov: VaR99 74,139 -> 70,872 without it);
+  bootstrap intervals in the executive summary; reports 3-11 Nov regenerated.
+
 ## Next
 - Watch the first scheduled runs (Yahoo on GitHub runners, Actions cache, bot commits).
 - M9: README for hiring managers (pitch, badges, report screenshot, latest PDF link,
@@ -101,5 +105,5 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
 ## Open issues (owner)
 1. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
    Fine for now; a better SX5E close source would remove them.
-2. **Worst scenario 2 Oct 2026** (ADR-026): kept unaltered; owner to choose among options
-   (keep / independent AAA cross-check / report flag).
+2. **Worst scenario 2 Oct 2026** (ADR-026/028): decided: kept, flagged automatically.
+   README limitation (AAA curve as swap-curve proxy) to be added in M9.

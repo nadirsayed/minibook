@@ -72,6 +72,7 @@ def market_store(tmp_path: Path, settings: Settings, client: FixtureClient) -> R
     store = RawStore(tmp_path / "raw")
     ecb.fetch_yield_curve(client, store, settings.ecb, START, END)
     ecb.fetch_fx(client, store, settings.ecb, START, END)
+    ecb.fetch_rating_curves(client, store, settings.ecb, START, END)
     treasury.fetch_par_curve(client, store, settings.treasury, START, END)
     fred.fetch_ust_cmt(client, store, settings.fred, START, END)
     mof.fetch_jgb(client, store, settings.mof)

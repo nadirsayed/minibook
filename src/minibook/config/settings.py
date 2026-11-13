@@ -64,12 +64,21 @@ class EcbEstrSettings(_Frozen):
     key: str
 
 
+class EcbRatingCurveSettings(_Frozen):
+    """AAA and all-ratings published spot rates (scenario artefact detector)."""
+
+    flow: str
+    prefixes: dict[str, str]
+    tenors: tuple[str, ...]
+
+
 class EcbSettings(_Frozen):
     """ECB Data Portal settings."""
 
     base_url: str
     yield_curve: EcbYieldCurveSettings
     fx: EcbFxSettings
+    rating_curves: EcbRatingCurveSettings
     estr: EcbEstrSettings
 
 
@@ -176,6 +185,9 @@ class VarSettings(_Frozen):
     bootstrap_resamples: int = Field(gt=0)
     bootstrap_seed: int
     bootstrap_ci: float = Field(gt=0.0, lt=1.0)
+    artefact_sigma_threshold: float = Field(gt=0.0)
+    artefact_reversal_days: int = Field(gt=0)
+    artefact_reversal_fraction: float = Field(gt=0.0, le=1.0)
 
 
 class BacktestSettings(_Frozen):

@@ -15,6 +15,14 @@
     "status": 200,
     "url": "https://data-api.ecb.europa.eu/service/data/EXR/D.JPY+USD.EUR.SP00.A?format=csvdata&startPeriod=2026-10-26&endPeriod=2026-11-06"
   },
+  "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A+G_N_C.SV_C_YM.SR_10Y+SR_2Y+SR_5Y?endPeriod=2026-11-06&format=csvdata&startPeriod=2026-10-26": {
+    "content_type": "text/csv",
+    "fetched_at_utc": "2026-11-13T01:11:12.827081+00:00",
+    "file": "49ac43fa5b012dd2",
+    "note": "verbatim",
+    "status": 200,
+    "url": "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A+G_N_C.SV_C_YM.SR_10Y+SR_2Y+SR_5Y?format=csvdata&startPeriod=2026-10-26&endPeriod=2026-11-06"
+  },
   "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.BETA0+BETA1+BETA2+BETA3+SR_10Y+SR_1Y+SR_5Y+TAU1+TAU2?endPeriod=2026-11-06&format=csvdata&startPeriod=2026-10-26": {
     "content_type": "text/csv",
     "fetched_at_utc": "2026-11-12T14:39:11.198503+00:00",

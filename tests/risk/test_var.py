@@ -81,6 +81,9 @@ def test_diversification_can_be_negative() -> None:
             bootstrap_resamples=200,
             bootstrap_seed=1,
             bootstrap_ci=0.9,
+            artefact_sigma_threshold=5.0,
+            artefact_reversal_days=2,
+            artefact_reversal_fraction=0.5,
         ),
         D,
     )

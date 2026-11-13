@@ -213,5 +213,15 @@ the ECB all-ratings curve. Over 1 → 5 Oct both curves fell by similar amounts,
 is real, but the AAA curve concentrated it on 2 Oct, with a 4.7σ jump in its Svensson
 BETA3. Most of the AAA vs all-ratings divergence reversed on 5–6 Oct.
 
+**Automated artefact flag (ADR-028).** Every run checks each scenario day for a move of the
+gap g = AAA − all-ratings spot rate (2Y/5Y/10Y, bp) with
+
+    |Δg_t| > k σ_Δg   and   −sign(Δg_t) Σ_{j=1..n} Δg_{t+j} ≥ f |Δg_t|      (k = 5, n = 2, f = 0.5)
+
+i.e. a large gap move that mostly reverses within n business days. Flagged days are kept
+in VaR/ES; the report lists them and shows VaR99/ES97.5 with and without them. A day whose
+reversal window extends past D is *pending*. On 11 Nov 2026 only 2 Oct is flagged
+(2Y z = −6.6, 5Y z = −7.0): VaR99 74,139 → 70,872 and ES97.5 70,730 → 68,912 without it.
+
 Backtesting (exceptions, Kupiec POF, Basel traffic light) follows ADR-024: with fewer than
 250 observations the report states "insufficient observations (N = x)".

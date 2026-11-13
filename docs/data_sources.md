@@ -4,7 +4,7 @@ Reviewed 2026-11-12. "Automated" means scheduled downloads by the minibook pipel
 
 | Data | Source | Terms (summary) | Automated use in minibook |
 |---|---|---|---|
-| EUR AAA curve (Svensson), FX reference rates, €STR | ECB Data Portal API | ESCB reuse policy: free reuse, source must be quoted ([policy](https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html)) | Yes |
+| EUR AAA curve (Svensson), AAA and all-ratings spot rates (scenario check, ADR-028), FX reference rates, €STR | ECB Data Portal API | ESCB reuse policy: free reuse, source must be quoted ([policy](https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html)) | Yes |
 | US Treasury par yields (primary, ADR-012) | U.S. Treasury "Daily Treasury Par Yield Curve Rates" CSV | U.S. government work, public domain (17 U.S.C. §105); robots.txt does not restrict the path | Yes, one yearly file per request |
 | US Treasury CMT par yields (cross-check) | FRED `fredgraph.csv` | Series are "Public Domain: Citation requested". FRED terms forbid data mining and scraping "that are disruptive" ([legal](https://fred.stlouisfed.org/legal/)) | Yes, one small request per series per day |
 | JGB constant-maturity yields | Japan MoF CSVs | Public Data License 1.0 ([notice](https://www.mof.go.jp/about_mof/notice/index.html)) | Yes |

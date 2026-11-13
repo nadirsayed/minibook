@@ -449,6 +449,10 @@ without it.
 source (e.g. the Bundesbank's Bund curve, terms to be checked first); (c) add a report flag
 for scenarios whose AAA vs all-ratings spread shock exceeds k σ, without altering them.
 
+**Owner decision (2026-11-13, after M8): option (c).** Keep the scenario unaltered, flag it
+in the report with VaR/ES with and without it, and detect such days automatically
+(ADR-028). No Bundesbank source for now.
+
 ## ADR-027: Daily pipeline, outputs and schedule
 
 - **One date** (`minibook run --date D`): snapshots of D and the previous TARGET day P
@@ -477,3 +481,36 @@ for scenarios whose AAA vs all-ratings spread shock exceeds k σ, without alteri
 - **Known risk**: Yahoo Finance may throttle GitHub-hosted runners. A failed equity fetch
   does not stop the run, but stale closes beyond the forward-fill rules make it fail
   explicitly (no silent fill). The workflow can be re-run by hand (`workflow_dispatch`).
+
+## ADR-028: Automated scenario artefact flag (AAA vs all-ratings gap)
+
+**Context.** ADR-026 found that the worst scenario (2 Oct 2026) is probably partly an AAA
+curve-fitting artefact. Historical simulation must not cherry-pick scenarios (CLAUDE.md 21),
+so the owner chose to flag, never to filter.
+
+**Decision.**
+- Data: ECB published spot rates of the AAA (`G_N_A`) and all-ratings (`G_N_C`) Svensson
+  curves at 2Y/5Y/10Y (`ecb/rating_curves`, same YC dataflow and reuse policy).
+- Signal: gap g = AAA − all-ratings (bp) per pillar; daily change Δg; σ = sample sd of Δg
+  over the scenario window (the day before the first scenario to D, as-of data only).
+- A scenario day t is flagged when, at some pillar, |Δg_t| > k σ **and**
+  −sign(Δg_t)·(Δg_{t+1} + … + Δg_{t+n}) ≥ f·|Δg_t|: a large gap move that mostly reverses.
+  k = 5, n = 2 business days, f = 0.5 (`var.artefact_*` in `config/settings.yaml`).
+  "Mostly reverses" is read as at least half of the move; n and k are the owner's values.
+- A day whose reversal window passes D is shown as *pending*, never as clean, and does not
+  enter the "without" figures.
+- Flagged scenarios **stay in VaR/ES**. The report (section 5) lists every flag (day,
+  pillar, gap move, z, reversal, book P&L), marks it in the worst-scenario table, and shows
+  VaR99/ES97.5 with and without the flagged days (diagnostic only). The executive summary
+  has one line with the same figures; `var_es.json` holds `scenario_flags`,
+  `var_ex_flagged`, `es_ex_flagged`.
+- If the rating-curve data are missing, the check is skipped with a warning and the report
+  says "not run"; "no scenario day flagged" appears only when the check ran on data.
+
+**Result (D = 11 Nov 2026, 500 scenarios).** Only 2 Oct 2026 is flagged: 2Y −9.4 bp
+(z −6.6, reversal +9.8 bp) and 5Y −10.0 bp (z −7.0, reversal +11.1 bp); 10Y (3.8σ) is
+below k. VaR99 74,139 / ES97.5 70,730 with it, 70,872 / 68,912 without it.
+
+**Limitations.** The all-ratings curve shares the ECB's fitting method, so a common fitting
+error is invisible to this check. The real fix is a EUR swap curve (ESTR/EURIBOR); the AAA
+government curve is a proxy for it (README limitations, roadmap).

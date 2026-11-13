@@ -59,6 +59,7 @@ def test_fetch_all_sources_offline(tmp_path: Path, monkeypatch: pytest.MonkeyPat
         "ecb/yield_curve",
         "ecb/fx",
         "ecb/estr",
+        "ecb/rating_curves",
         "treasury/par_curve",
         "fred/ust_cmt",
         "mof/jgb_cm",

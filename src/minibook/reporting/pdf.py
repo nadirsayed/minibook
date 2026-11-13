@@ -120,6 +120,69 @@ def _eur(x: float) -> str:
     return f"{x:,.0f}"
 
 
+def _with_ci(value: float, ci: tuple[float, float] | None) -> str:
+    """'74,139 [64.5k-80.0k]': figure and its bootstrap interval, compactly."""
+    if ci is None:
+        return _eur(value)
+    return f"{_eur(value)} [{ci[0] / 1e3:,.1f}k-{ci[1] / 1e3:,.1f}k]"
+
+
+def _scenario_check(w: _Writer, d: ReportData) -> None:
+    """Artefact flags (ADR-028): listed, never removed from the VaR."""
+    v = d.var
+    var_l, es_l = f"VaR {_pct(v.var_confidence)}", f"ES {_pct(v.es_confidence)}"
+    if not v.artefact_checked:
+        w.add(
+            w.p(
+                "<b>Scenario check (ADR-028):</b> not run (no ECB rating-curve data).",
+                w.small,
+            )
+        )
+        return
+    if not v.flags:
+        w.add(
+            w.p(
+                "<b>Scenario check (ADR-028):</b> no scenario day flagged as a suspected AAA "
+                "curve-fitting artefact.",
+                w.small,
+            )
+        )
+        return
+    w.add(
+        w.p(
+            "<b>Scenario check (ADR-028):</b> days on which the gap between the ECB AAA and "
+            "all-ratings curves moved more than the threshold and mostly reversed within two "
+            "business days. These are suspected AAA curve-fitting artefacts. They are kept in "
+            "the VaR (no cherry-picking) and marked * in the worst-scenario table. "
+            f"With them: {var_l} {_eur(v.var)}, {es_l} "
+            f"{_eur(v.es)}; without them (diagnostic): {var_l} {_eur(v.var_ex_flagged or 0.0)}, "
+            f"{es_l} {_eur(v.es_ex_flagged or 0.0)}.",
+            w.small,
+        )
+    )
+    total = v.pnl.sum(axis=1)
+    rows = []
+    for f in v.flags:
+        pnl = total.get(f.scenario_date)
+        rows.append(
+            [
+                str(f.scenario_date),
+                f.pillar.replace("SR_", ""),
+                f"{f.gap_move_bp:+.1f}",
+                f"{f.z:+.1f}",
+                "pending" if f.reversal_bp is None else f"{f.reversal_bp:+.1f}",
+                "" if pnl is None else _eur(float(pnl)),
+            ]
+        )
+    w.add(
+        w.table(
+            ["Scenario day", "Pillar", "Gap move (bp)", "z", "Reversal (bp)", "Book P&amp;L"],
+            rows,
+            [26 * mm, 16 * mm, 26 * mm, 16 * mm, 26 * mm, 26 * mm],
+        )
+    )
+
+
 def _image(png: bytes, width: float) -> Image:
     img = Image(io.BytesIO(png))
     img.drawWidth, img.drawHeight = width, width * img.imageHeight / img.imageWidth
@@ -153,10 +216,19 @@ def _summary(w: _Writer, d: ReportData) -> None:
         _eur(book["actual"]),
         _eur(book["explained"]),
         f"{_eur(book['unexplained'])} ({unexpl_pct:+.1f}%)",
-        _eur(d.var.var),
-        _eur(d.var.es),
+        _with_ci(d.var.var, d.var.var_ci),
+        _with_ci(d.var.es, d.var.es_ci),
     ]
-    w.add(w.table(head, [row], [CONTENT_W / 6] * 6, numeric_from=0), Spacer(1, 3))
+    w.add(w.table(head, [row], [CONTENT_W / 6] * 6, numeric_from=0))
+    if d.var.ci_level is not None:
+        w.add(
+            w.p(
+                f"Brackets: {_pct(d.var.ci_level)} bootstrap interval ({d.var.n_scenarios} "
+                "scenario P&amp;Ls resampled; detail in section 5).",
+                w.small,
+            )
+        )
+    w.add(Spacer(1, 3))
     flagged = per[per["flagged"]]
     w.add(
         w.p(
@@ -165,6 +237,16 @@ def _summary(w: _Writer, d: ReportData) -> None:
             + (": " + ", ".join(flagged["instrument_id"]) if len(flagged) else ".")
         )
     )
+    flagged_days = sorted({str(f.scenario_date) for f in d.var.flags if not f.pending})
+    if flagged_days:
+        w.add(
+            w.p(
+                f"<b>Scenario check:</b> {len(flagged_days)} scenario day(s) flagged as suspected "
+                f"AAA curve-fitting artefacts, kept in VaR ({', '.join(flagged_days)}); "
+                f"without them {var_l} {_eur(d.var.var_ex_flagged or 0.0)}, "
+                f"{es_l} {_eur(d.var.es_ex_flagged or 0.0)}."
+            )
+        )
     w.add(
         w.p(
             f"<b>Backtesting:</b> {d.backtest.status}. Exceptions so far: "
@@ -392,11 +474,15 @@ def _risk(w: _Writer, d: ReportData) -> None:
     )
     rows = [[i, _eur(float(r["var"])), _eur(float(r["es"]))] for i, r in v.standalone.iterrows()]
     left = w.table(["Standalone", var_l, es_l], rows, [32 * mm, 22 * mm, 22 * mm])
+    flagged = {f.scenario_date for f in v.flags if not f.pending}
     wrows = []
     for date_, r in v.worst.iterrows():
         contrib = r.drop("total")
         top = str(contrib.abs().idxmax())
-        wrows.append([str(date_), _eur(float(r["total"])), f"{top} {_eur(float(contrib[top]))}"])
+        mark = " *" if date_ in flagged else ""
+        wrows.append(
+            [f"{date_}{mark}", _eur(float(r["total"])), f"{top} {_eur(float(contrib[top]))}"]
+        )
     right = w.table(
         ["Worst scenario", "Book P&amp;L", "Largest contributor"],
         wrows,
@@ -409,7 +495,9 @@ def _risk(w: _Writer, d: ReportData) -> None:
             colWidths=[80 * mm, CONTENT_W - 80 * mm],
             style=[("VALIGN", (0, 0), (-1, -1), "TOP")],
         ),
+        Spacer(1, 3),
     )
+    _scenario_check(w, d)
 
 
 def _market(w: _Writer, d: ReportData) -> None:

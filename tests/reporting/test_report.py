@@ -27,8 +27,9 @@ from minibook.reporting.guard import IndexLevelLeakError, find_levels
 from minibook.reporting.pdf import render
 from minibook.risk.backtest import backtest
 from minibook.risk.greeks import book_greeks, with_todays_fixings
+from minibook.risk.scenario_check import ScenarioFlag
 from minibook.risk.scenarios import historical_scenarios, scenario_dates
-from minibook.risk.var import historical_var
+from minibook.risk.var import historical_var, with_flags
 from tests.conftest import ROOT
 from tests.risk.test_greeks import TRADE, flat_snapshot
 from tests.risk.test_var import history
@@ -182,3 +183,33 @@ def test_quality_lines_and_moves(settings: Settings) -> None:
     assert rmodel.quality_lines(snap, book) == ("No forward-fills or data-quality flags today.",)
     moves = rmodel.market_moves(snap, snap)
     assert set(moves["kind"]) == {"FX", "Index"} and (moves["ret"] == 0.0).all()
+
+
+def test_summary_shows_bootstrap_brackets(tmp_path: Path, settings: Settings) -> None:
+    data, levels = report_data(settings)
+    out = tmp_path / "r.pdf"
+    render(data, out, levels)
+    text = pdf_text(out)[1]
+    assert data.var.var_ci is not None
+    lo, hi = data.var.var_ci
+    assert f"[{lo / 1e3:,.1f}k-{hi / 1e3:,.1f}k]" in text
+    assert "90% bootstrap interval" in text
+    assert "Scenario check (ADR-028): not run" in text
+    checked = dataclasses.replace(data, var=with_flags(data.var, [], settings.var))
+    render(checked, out, levels)
+    assert "no scenario day flagged" in pdf_text(out)[1]
+
+
+def test_flagged_scenario_is_listed_and_kept(tmp_path: Path, settings: Settings) -> None:
+    data, levels = report_data(settings)
+    day = data.var.worst.index[0]
+    # SYNTHETIC flag on the worst scenario day, as the detector would produce it.
+    flag = ScenarioFlag(day, "SR_5Y", -10.0, 1.4, 9.8, pending=False)
+    var = with_flags(data.var, [flag], settings.var)
+    out = tmp_path / "r.pdf"
+    render(dataclasses.replace(data, var=var), out, levels)
+    text = " ".join(pdf_text(out)[1].split())
+    assert "suspected AAA curve-fitting artefact" in text
+    assert f"{day} *" in text  # marked in the worst-scenario table
+    assert var.var_ex_flagged is not None and var.var_ex_flagged != var.var
+    assert "without them" in text and "(no cherry-picking)" in text

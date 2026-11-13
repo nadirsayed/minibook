@@ -35,6 +35,7 @@ from minibook.instruments.base import Instrument
 from minibook.market.snapshot import MarketSnapshot
 from minibook.pnl.explain import explain_components, market_moves
 from minibook.risk.greeks import book_greeks, with_todays_fixings
+from minibook.risk.scenario_check import ScenarioFlag, flagged_dates
 from minibook.risk.scenarios import ScenarioSet
 
 ROUND_DIGITS = 9  # (1 - 0.99) * 500 = 5.000000000000004 in floating point: round first
@@ -130,6 +131,10 @@ class VarResult:
     var_ci: tuple[float, float] | None = None
     es_ci: tuple[float, float] | None = None
     ci_level: float | None = None
+    flags: tuple[ScenarioFlag, ...] = ()
+    artefact_checked: bool = False  # True once with_flags ran on rating-curve data
+    var_ex_flagged: float | None = None
+    es_ex_flagged: float | None = None
     delta_gamma_var: float | None = None
     delta_gamma_es: float | None = None
 
@@ -162,6 +167,25 @@ def summarize(pnl: pd.DataFrame, cfg: VarSettings, as_of: date) -> VarResult:
         var_ci=var_ci,
         es_ci=es_ci,
         ci_level=cfg.bootstrap_ci,
+    )
+
+
+def with_flags(result: VarResult, flags: Sequence[ScenarioFlag], cfg: VarSettings) -> VarResult:
+    """Attach artefact flags and, as a diagnostic, VaR/ES without the flagged days.
+
+    The headline VaR/ES are unchanged: flagged scenarios stay in the set (owner rule).
+    """
+    days = set(flagged_dates(flags))
+    if not days:
+        return dataclasses.replace(result, flags=tuple(flags), artefact_checked=True)
+    total = result.pnl.sum(axis=1)
+    kept = total[[d not in days for d in total.index]].to_numpy()
+    return dataclasses.replace(
+        result,
+        flags=tuple(flags),
+        artefact_checked=True,
+        var_ex_flagged=var_from_pnl(kept, cfg.var_confidence),
+        es_ex_flagged=es_from_pnl(kept, cfg.es_confidence),
     )
 
 

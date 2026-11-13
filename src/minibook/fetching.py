@@ -66,6 +66,9 @@ def fetch_all(
         ),
         "ecb.fx": lambda: ecb.fetch_fx(client, store, s.ecb, ws("ecb", "fx"), end),
         "ecb.estr": lambda: ecb.fetch_estr(client, store, s.ecb, ws("ecb", "estr"), end),
+        "ecb.rating_curves": lambda: ecb.fetch_rating_curves(
+            client, store, s.ecb, ws("ecb", "rating_curves"), end
+        ),
         "treasury.par_curve": lambda: treasury.fetch_par_curve(
             client, store, s.treasury, ws("treasury", "par_curve"), end
         ),

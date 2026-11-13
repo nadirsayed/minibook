@@ -46,6 +46,17 @@ def test_ecb_fx_and_estr(client: FixtureClient, store: RawStore, settings: Setti
     assert store.load_wide("ecb", "estr").loc["2026-11-02", "ESTR"] == 2.441
 
 
+def test_ecb_rating_curves(client: FixtureClient, store: RawStore, settings: Settings) -> None:
+    ecb.fetch_rating_curves(client, store, settings.ecb, START, END)
+    row = store.load_wide("ecb", "rating_curves").loc["2026-11-02"]
+    # Values from the recorded ECB YC payload (tests/fixtures/http/49ac43fa5b012dd2).
+    assert row["ALL:SR_5Y"] == 3.5085513782
+    assert row["AAA:SR_2Y"] == 2.9935059176
+    # Same AAA 10Y spot rate as the yield_curve fixture (57b7d73bc0746750).
+    assert row["AAA:SR_10Y"] == 3.3265191239
+    assert sorted(row.index) == [f"{r}:SR_{t}" for r in ("AAA", "ALL") for t in ("10Y", "2Y", "5Y")]
+
+
 def test_ecb_series_url_combines_keys() -> None:
     url = ecb.series_url("B", "YC", ["P.Q.TAU1", "P.Q.BETA0"])
     assert url == "B/YC/P.Q.BETA0+TAU1"

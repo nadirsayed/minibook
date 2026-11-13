@@ -5,6 +5,10 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- Scenario artefact flag (ADR-028): ECB AAA vs all-ratings gap detector (> 5 sigma move,
+  mostly reversed within 2 business days; thresholds in config). Flagged scenarios stay in
+  VaR/ES; the report lists them and shows VaR99/ES97.5 with and without them.
+- Executive summary shows the 90% bootstrap interval next to VaR99 and ES97.5.
 - M8: `minibook run --date`, `backfill`, `daily` (scheduled catch-up with ECB readiness
   check), incremental `fetch`; daily GitHub Actions workflow; committed outputs and reports.
 - Seeded bootstrap confidence intervals for VaR99 and ES97.5 (shown in the report).

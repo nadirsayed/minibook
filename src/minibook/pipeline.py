@@ -49,8 +49,9 @@ from minibook.reporting.guard import check_no_levels
 from minibook.reporting.pdf import render
 from minibook.risk.backtest import backtest
 from minibook.risk.greeks import book_greeks
-from minibook.risk.scenarios import historical_scenarios
-from minibook.risk.var import VarResult, historical_var
+from minibook.risk.scenario_check import ScenarioFlag, detect, gap_series
+from minibook.risk.scenarios import historical_scenarios, scenario_dates
+from minibook.risk.var import VarResult, historical_var, with_flags
 
 LOG = logging.getLogger(__name__)
 FIXING_INDEX = "EURIBOR6M"
@@ -144,6 +145,22 @@ def _backtest_obs(history: pd.DataFrame, pnl: dict[date, float]) -> pd.DataFrame
     return pd.DataFrame(rows, columns=["date", "var_prev", "pnl"])
 
 
+def _scenario_flags(store: RawStore, s: Settings, as_of: date) -> list[ScenarioFlag] | None:
+    """Artefact flags over the scenario window (ADR-028); None if no rating-curve data."""
+    curves = store.load_wide("ecb", "rating_curves", as_of=as_of)
+    if curves.empty:
+        LOG.warning("no ECB rating-curve data: scenario artefact check skipped")
+        return None
+    days = scenario_dates(as_of, s.var.n_scenarios)[1:]
+    return detect(gap_series(curves, s.ecb.rating_curves.tenors), days, s.var)
+
+
+def _flag_scenarios(var: VarResult, store: RawStore, s: Settings, as_of: date) -> VarResult:
+    """Attach the artefact flags when the check can run (ADR-028); VaR/ES never change."""
+    flags = _scenario_flags(store, s, as_of)
+    return var if flags is None else with_flags(var, flags, s.var)
+
+
 def _var_json(v: VarResult) -> dict[str, object]:
     return {
         "as_of": str(v.as_of),
@@ -158,6 +175,20 @@ def _var_json(v: VarResult) -> dict[str, object]:
         "delta_gamma_var": v.delta_gamma_var,
         "delta_gamma_es": v.delta_gamma_es,
         "diversification_var": v.diversification_var,
+        "artefact_checked": v.artefact_checked,
+        "scenario_flags": [
+            {
+                "scenario_date": str(f.scenario_date),
+                "pillar": f.pillar,
+                "gap_move_bp": f.gap_move_bp,
+                "z": f.z,
+                "reversal_bp": f.reversal_bp,
+                "pending": f.pending,
+            }
+            for f in v.flags
+        ],
+        "var_ex_flagged": v.var_ex_flagged,
+        "es_ex_flagged": v.es_ex_flagged,
         "standalone": {
             str(k): {"var": float(r["var"]), "es": float(r["es"])}
             for k, r in v.standalone.iterrows()
@@ -252,9 +283,10 @@ def run(
 
     e = explain(insts, prev, curr, s.risk, s.pnl)
     greeks = book_greeks(insts, curr, s.risk)
-    var = historical_var(
+    var_raw = historical_var(
         insts, curr, historical_scenarios(snapshot_for, as_of, s.var.n_scenarios), s.var, s.risk
     )
+    var = _flag_scenarios(var_raw, builder.store, s, as_of)
     out_root = s.pipeline.output_dir
     history, pnl_hist = _read_history(out_root, as_of)
     history = pd.concat(
