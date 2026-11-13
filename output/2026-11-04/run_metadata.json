@@ -96,11 +96,11 @@
       "target_date": "2026-11-03"
     }
   ],
-  "git_sha": "dba0a411bdab368f72c3735618394b67692296d2-dirty",
+  "git_sha": "076a647906ac49e1b970fcd10c83b914b027bdf3-dirty",
   "minibook_version": "1.0.0",
   "previous": "2026-11-03",
   "quality_flags": [],
   "retrospective_fetch": true,
-  "run_at_utc": "2026-11-13T11:13:15.509488+00:00",
-  "run_seconds": 4.13
+  "run_at_utc": "2026-11-13T14:44:15.818219+00:00",
+  "run_seconds": 4.22
 }
