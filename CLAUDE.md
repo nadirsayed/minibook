@@ -96,6 +96,11 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
 24. **Schedule (ADR-027, refines decision 1).** Cron `17,47 11-17 * * 1-5` (off the top of
     the hour, twice an hour); in-job window 13:00-19:00 Europe/Berlin, so 13:17-18:47 local
     triggers run in both CET and CEST. The job is idempotent; extra triggers are safe.
+25. **Stable image names.** Files under `docs/img/` are referenced from outside this repo
+    (the owner's profile README embeds the raw URL of `report_page4.png`). Keep their
+    names stable (`report_page1.png`, `report_page4.png`): regenerate them in place; never
+    rename or delete them without telling the owner first. (43ab7ea renamed them and broke
+    an external link.)
 
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.
