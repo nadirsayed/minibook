@@ -37,6 +37,7 @@ dev = [
     "types-requests>=2.32",
     "types-PyYAML>=6.0",
     "QuantLib>=1.34",
+    "pypdf>=4.0",
 ]
 
 [build-system]

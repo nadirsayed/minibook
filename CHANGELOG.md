@@ -5,6 +5,9 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M7 PDF report (<= 5 pages): summary, positions, Greeks + key-rate charts, P&L waterfall
+  with breach notes and step attribution, VaR/ES histogram and history, worst scenarios,
+  market moves; notes and sources; index-level guard; deterministic output.
 - M6: historical scenarios (500 x 71 factors), full-revaluation VaR99/ES97.5, standalone,
   diversification, worst scenarios, delta-gamma VaR; backtesting (Kupiec POF, Basel traffic
   light, "insufficient observations" below 250).

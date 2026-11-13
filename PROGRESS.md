@@ -74,11 +74,20 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   rule. Snapshot builder 22x faster (identical results). Real run 11 Nov: VaR99 74.1k,
   ES97.5 70.7k, dg-VaR 73.8k; 3.7 s. 204 tests, 97% coverage.
 
+- **Process change (owner, 2026-11-13)**: commits authored by Nadir Sayed with trailer
+  `Co-authored-by: Claude <noreply@anthropic.com>`. At each milestone end the owner commits
+  one small contribution via github.com; wait for it, check CI, `git pull --rebase` before
+  pushing.
+- **M7 PDF report** (`reporting/model.py`, `charts.py`, `pdf.py`, `guard.py`, ADR-025):
+  5 pages, all brief sections + vol-proxy/dividend/simplification notes; index-level guard;
+  deterministic bytes; real 11 Nov render reviewed page by page (local only, not committed).
+  210 tests, 98% coverage.
+
 ## Next
-- M7 PDF report (<= 5 pages, reportlab + matplotlib): summary, positions (strikes as % of
-  spot), Greeks + KR charts, P&L waterfall with breach notes, VaR histogram/history/worst
-  scenarios, market moves as % returns; footer with sources, timestamps, SHA, vol-proxy and
-  dividend notes; automated check that no index level appears.
+- M8 pipeline + CLI `run --date` / `backfill`: outputs (valuations.csv, greeks.csv,
+  pnl_explain.csv, var_es.json, report.pdf, run_metadata.json) with the index-level guard
+  on CSVs too; VaR history from previous outputs; daily GitHub Actions workflow (Mon-Fri,
+  CET/CEST, retries, BOOK_PRIVATE_YAML_B64 secret, reports/ commit); < 60 s per run.
 
 ## Open issues (owner)
 1. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".

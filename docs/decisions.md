@@ -386,3 +386,24 @@ power on 40. Both are implemented, but with N < 250 the report shows **"insuffic
 observations (N = x)"** instead of a zone or a test verdict. A misleading green is never
 shown. From N = 250 on, the zone uses the most recent 250 observations. Exceptions are
 P&L_t < −VaR_{t−1}, with P&L the actual P&L of the static book.
+
+## ADR-025: PDF report design
+
+- **Layout** (≤ 5 A4 pages, tested): p1 executive summary (KPIs, breaches, backtest status,
+  data quality) and positions; p2 Greeks by instrument and by risk factor with key-rate DV01
+  small multiples; p3 P&L waterfall, per-instrument explain with the vanna+volga diagnostic
+  and breach notes, step attribution with its order; p4 risk (scenario histogram with
+  VaR/ES, VaR/ES history, standalone, worst scenarios) and market (EUR curve today vs t−1
+  with a separate bp-change panel, FX and index % returns, EWMA vols); p5 notes, sources,
+  data timestamps, git SHA and config hash.
+- **No index levels (ADR-019)**: the report model is built from returns, ratios, vols and
+  EUR amounts only (strikes as % of trade-date spot, moneyness as %). A guard scans every
+  rendered string for the day's, the previous day's and the trade-date levels (decimal
+  forms) and aborts before writing. Tests also check integer forms on synthetic levels.
+- **Determinism**: reportlab invariant mode and timestamp-free PNGs; identical inputs give
+  identical bytes (tested). The wall-clock time is not printed; data fetch timestamps are.
+- **Charts**: dataviz method. One y-axis per chart, blue/red only for signed values with
+  direct labels, legends only for two or more series, recessive grid. Palette validated
+  with the dataviz validator (blue/red: CVD ΔE 21.6, contrast ≥ 3:1).
+- **Backtest status** shows "insufficient observations (N = x)" below 250 observations
+  (ADR-024).
