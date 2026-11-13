@@ -5,6 +5,11 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- M9 README: pitch, badges, report screenshots, quickstart, architecture diagram,
+  methodology summary, sign conventions, what the tests prove, limitations, roadmap.
+- `reports/README.md` index (newest first, headline P&L, VaR and ES), refreshed by every run.
+- `init-book` restores the git-ignored option terms on a fresh clone, verified against the
+  committed digest.
 - Scenario artefact flag (ADR-028): ECB AAA vs all-ratings gap detector (> 5 sigma move,
   mostly reversed within 2 business days; thresholds in config). Flagged scenarios stay in
   VaR/ES; the report lists them and shows VaR99/ES97.5 with and without them.
@@ -40,6 +45,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - CLAUDE.md with standing instructions and owner decisions; docs/data_sources.md.
 
 ### Changed
+- The EWMA vol recursion starts at `data.history_start` whatever the cache holds, so
+  outputs are byte-identical across caches fetched at different times.
 - P&L explain uses the period theta (revaluation t-1 -> t, market held at t-1) instead of
   theta_1d x calendar days (owner, ADR-022).
 - DV01 and key-rate DV01 are central differences (owner).

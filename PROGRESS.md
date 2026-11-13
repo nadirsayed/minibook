@@ -96,11 +96,15 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   all-ratings spot rates, only 2 Oct flagged on 11 Nov: VaR99 74,139 -> 70,872 without it);
   bootstrap intervals in the executive summary; reports 3-11 Nov regenerated.
 
+- **M9 (in progress)**: README rewritten for readers outside the project; reports index;
+  fresh-clone reproduction timed at about 2 minutes (sync 2 s, fetch 98 s, init-book 3 s,
+  run 5 s), which exposed two gaps, now fixed: init-book restore of the private terms, and
+  EWMA seeding at history_start (data outputs now byte-identical across clones).
+
 ## Next
-- Watch the first scheduled runs (Yahoo on GitHub runners, Actions cache, bot commits).
-- M9: README for hiring managers (pitch, badges, report screenshot, latest PDF link,
-  quickstart, mermaid diagram, methodology, sign conventions, what the tests prove,
-  limitations, roadmap), docs polish, v1.0.0 tag by 2026-12-31.
+- Watch the scheduled runs through December (22 TARGET days).
+- v1.0.0: bump the version and tag by 2026-12-31 (owner go-ahead), then the 31 Dec report
+  arrives on 4 or 5 Jan 2027 without re-tagging.
 
 ## Open issues (owner)
 1. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
