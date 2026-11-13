@@ -9,7 +9,7 @@ name: Daily report
 # date, exits 75 while the ECB curve is not out, and catches up on any missing day in order.
 on:
   schedule:
-    - cron: "47,17 11-17 * * 1-5"
+    - cron: "17,47 11-17 * * 1-5"
   workflow_dispatch:
 
 permissions:
