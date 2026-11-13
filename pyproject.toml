@@ -1,6 +1,6 @@
 [project]
 name = "minibook"
-version = "0.1.0"
+version = "1.0.0"
 description = "A mini multi-asset derivatives book: daily valuation, Greeks, P&L explain, historical VaR/ES and a PDF risk report from real public market data."
 readme = "README.md"
 license = "MIT"

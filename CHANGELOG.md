@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-13
+
+First complete release: daily valuation, Greeks, P&L explain, VaR/ES and PDF report,
+scheduled on GitHub Actions. December 2026 reports follow from the same code.
+
 ### Added
 - M9 README: pitch, badges, report screenshots, quickstart, architecture diagram,
   methodology summary, sign conventions, what the tests prove, limitations, roadmap.
@@ -65,3 +70,6 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   history coverage, and validates the ECB Svensson rebuild against SR_1Y/5Y/10Y.
 - Project scaffold: uv/pyproject (Python 3.12), src layout, Typer CLI stubs
   (`init-book`, `fetch`, `run`, `backfill`), ruff, mypy --strict, pytest, pre-commit, CI.
+
+[Unreleased]: https://github.com/nadirsayed/minibook/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/nadirsayed/minibook/releases/tag/v1.0.0
