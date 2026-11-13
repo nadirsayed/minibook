@@ -111,6 +111,12 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   to `17,47 11-17 * * 1-5` at ~15:05 UTC (ADR-027).
 - Done when: a run with event `schedule` commits a report. Then restore "runs unattended"
   in the README.
+- Hypothesis under test (owner, 2026-11-13): scheduled runs are tied to the account that
+  last edited the cron line. Every earlier cron edit (4523b78, 220e4d5) was pushed from this
+  Claude session; the owner re-registered it from their own account at 15:11 UTC (0474908,
+  "47,17") and 15:15 UTC (34cdf32, back to "17,47"). Evidence so far: 0 scheduled runs
+  through 15:25 UTC, including the 15:17 trigger after 220e4d5. First trigger after the
+  re-registration: 15:47 UTC. Result: pending (tonight's check).
 
 ## Next
 - 13 Nov evening: check the first scheduled Daily report runs. If the 12 Nov report was

@@ -210,10 +210,11 @@ def test_cron_and_window_admit_the_same_triggers_in_both_seasons(
 ) -> None:
     triggers = _cron_triggers(day)
     assert all(t.minute not in (0, 1, 2, 3, 4, 5) for t in triggers)  # off the top of the hour
-    admitted = [
+    admitted = sorted(
         t.astimezone(ZoneInfo(settings.pipeline.timezone)).strftime("%H:%M")
         for t in triggers
         if in_window(t, settings)
-    ]
-    # Twice an hour from 13:17 to 18:47 Europe/Berlin, whatever the season.
-    assert admitted == [f"{h:02d}:{m}" for h in range(13, 19) for m in ("17", "47")]
+    )
+    # Twice an hour from 13:17 to 18:47 Europe/Berlin, whatever the season. Sorted: the
+    # order of the minutes in the cron line ("17,47" or "47,17") does not matter.
+    assert admitted == sorted(f"{h:02d}:{m}" for h in range(13, 19) for m in ("17", "47"))
