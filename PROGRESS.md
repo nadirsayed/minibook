@@ -105,6 +105,13 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   artifact upload, 18:05 retry, reproducibility wording, two leaked closes removed);
   disclosure option A recorded in ADR-019, README and report notes.
 
+## Unattended-operation proof (tracked separately, owner decision 23)
+- Status: **not yet proven.** No cron-triggered run fired on 2026-11-13 with the hourly
+  `5 11-17` schedule (0 scheduled runs since registration at 00:55 UTC). Schedule moved
+  to `17,47 11-17 * * 1-5` at ~15:05 UTC (ADR-027).
+- Done when: a run with event `schedule` commits a report. Then restore "runs unattended"
+  in the README.
+
 ## Next
 - 13 Nov evening: check the first scheduled Daily report runs. If the 12 Nov report was
   published unattended, tag v1.0.1 (PR #1 + disclosure note); otherwise report first.

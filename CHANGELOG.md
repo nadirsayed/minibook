@@ -12,6 +12,10 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   history).
 
 ### Changed
+- Daily schedule: triggers at :17 and :47 past each hour, 11-17 UTC Mon-Fri, off the top of
+  the hour where GitHub delays or drops scheduled runs; in-job window 13:00-19:00
+  Europe/Berlin, so the same 13:17-18:47 local triggers run in CET and CEST (tested
+  against the workflow file).
 - Report page 1: the unexplained % is relative to abs(actual P&L), so it carries the
   unexplained's own sign; the breach threshold reads "abs(actual P&L)" (the pipe
   characters rendered like the letter l); new "Key risks" line (DV01 per currency, equity

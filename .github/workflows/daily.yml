@@ -1,14 +1,15 @@
 name: Daily report
 
 # ADR-001/027: the report for D is produced on the next TARGET business day once the ECB has
-# published the curve for D (~12:00 CET). Cron runs in UTC: hourly triggers at :05 from
-# 11:05 to 17:05 UTC cover 13:05-18:05 Europe/Berlin in both CET and CEST; the local
-# window filters the extra UTC trigger at the start or end of each season.
-# `minibook daily` checks the local window and the TARGET calendar itself, does nothing when
-# everything is up to date, and catches up on any missing day in order.
+# published the curve for D (~12:00 CET). Cron runs in UTC and GitHub may delay or drop
+# triggers at the top of the hour, so triggers run twice an hour at :17 and :47, 11-17 UTC.
+# In Europe/Berlin that is 12:17-18:47 in CET (UTC+1) and 13:17-19:47 in CEST (UTC+2);
+# the in-job window (13:00-19:00 local, config/settings.yaml) admits exactly 13:17-18:47 in
+# both seasons. `minibook daily` is idempotent: it does nothing when everything is up to
+# date, exits 75 while the ECB curve is not out, and catches up on any missing day in order.
 on:
   schedule:
-    - cron: "5 11-17 * * 1-5"
+    - cron: "17,47 11-17 * * 1-5"
   workflow_dispatch:
 
 permissions:

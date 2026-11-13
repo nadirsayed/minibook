@@ -8,6 +8,7 @@ import json
 import shutil
 from datetime import UTC, date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import pytest
@@ -143,10 +144,6 @@ def test_schedule_helpers(settings: Settings, market_store: RawStore, tmp_path: 
     assert in_window(datetime(2026, 11, 9, 12, 30, tzinfo=UTC), settings)
     assert not in_window(datetime(2026, 11, 9, 11, 30, tzinfo=UTC), settings)
     assert in_window(datetime(2026, 7, 6, 11, 30, tzinfo=UTC), settings)
-    # The final :05 UTC trigger must be admitted in either daylight-saving season.
-    assert in_window(datetime(2026, 11, 9, 17, 5, tzinfo=UTC), settings)
-    assert in_window(datetime(2026, 7, 6, 16, 5, tzinfo=UTC), settings)
-    assert not in_window(datetime(2026, 7, 6, 17, 5, tzinfo=UTC), settings)
     assert due_dates(TRADE, date(2026, 11, 5), tmp_path) == [date(2026, 11, 3), date(2026, 11, 4)]
     (tmp_path / "2026-11-03").mkdir()
     (tmp_path / "2026-11-03" / "report.pdf").write_bytes(b"%PDF")
@@ -191,3 +188,32 @@ def test_scenario_check_skipped_without_rating_curves(
 ) -> None:
     assert pipeline._scenario_flags(RawStore(tmp_path), settings, date(2026, 11, 4)) is None
     assert "scenario artefact check skipped" in caplog.text
+
+
+def _cron_triggers(day: date) -> list[datetime]:
+    """UTC trigger times of the daily workflow's cron on ``day`` (minute and hour fields)."""
+    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "daily.yml").read_text())
+    (entry,) = wf[True]["schedule"]  # PyYAML reads the key "on" as True
+    minute, hour, dom, month, dow = entry["cron"].split()
+    assert (dom, month, dow) == ("*", "*", "1-5")  # every weekday
+    lo, hi = (int(h) for h in hour.split("-"))
+    return [
+        datetime(day.year, day.month, day.day, h, int(m), tzinfo=UTC)
+        for h in range(lo, hi + 1)
+        for m in minute.split(",")
+    ]
+
+
+@pytest.mark.parametrize("day", [date(2026, 11, 9), date(2026, 7, 6)])  # CET, CEST
+def test_cron_and_window_admit_the_same_triggers_in_both_seasons(
+    settings: Settings, day: date
+) -> None:
+    triggers = _cron_triggers(day)
+    assert all(t.minute not in (0, 1, 2, 3, 4, 5) for t in triggers)  # off the top of the hour
+    admitted = [
+        t.astimezone(ZoneInfo(settings.pipeline.timezone)).strftime("%H:%M")
+        for t in triggers
+        if in_window(t, settings)
+    ]
+    # Twice an hour from 13:17 to 18:47 Europe/Berlin, whatever the season.
+    assert admitted == [f"{h:02d}:{m}" for h in range(13, 19) for m in ("17", "47")]

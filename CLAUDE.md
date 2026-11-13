@@ -89,8 +89,13 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
     recovered from the published option outputs; this is stated in the README limitations
     and in every report. Keep the index-level guard. Never write a real index level into any
     committed file, docs and examples included (two did leak; they stay in history).
-23. **v1.0.1** only after the 12 Nov 2026 report is published unattended by the scheduled
-    workflow; otherwise report what failed first.
+23. **Releases are not tied to the unattended proof** (owner, 2026-11-13; replaces the
+    earlier rule). The proof (first report published by a cron-triggered run) is tracked
+    in PROGRESS.md; "runs unattended" goes back into the README only once it lands. A
+    manual workflow_dispatch run is recorded as manual, never as unattended.
+24. **Schedule (ADR-027, refines decision 1).** Cron `17,47 11-17 * * 1-5` (off the top of
+    the hour, twice an hour); in-job window 13:00-19:00 Europe/Berlin, so 13:17-18:47 local
+    triggers run in both CET and CEST. The job is idempotent; extra triggers are safe.
 
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.

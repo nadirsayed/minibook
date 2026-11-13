@@ -486,9 +486,13 @@ in the report with VaR/ES with and without it, and detect such days automaticall
   integer-form coincidence between an EUR step-attribution amount and a rounded index
   close. This confirms that the run-time guard must check decimal forms only, as whole
   numeric tokens. Integer forms are checked in tests on synthetic levels.
-- **Schedule** (`.github/workflows/daily.yml`): hourly UTC triggers 11:05–17:05 Mon–Fri.
-  `minibook daily` acts only inside 13:00–18:15 Europe/Berlin (CET/CEST handled by
-  zoneinfo) on TARGET days. It catches up every TARGET day after the trade date without a
+- **Schedule** (`.github/workflows/daily.yml`; owner, 2026-11-13): UTC triggers at :17 and
+  :47 past each hour from 11 to 17, Mon–Fri. They are off the top of the hour because GitHub
+  may delay or drop scheduled runs there: the earlier hourly :05 triggers never fired on
+  their first day. `minibook daily` acts only inside 13:00–19:00 Europe/Berlin (CET/CEST
+  handled by zoneinfo) on TARGET days, so the admitted triggers are 13:17 to 18:47 local in
+  both seasons (tested against the workflow's cron line). Extra triggers are safe because
+  the job is idempotent. It catches up every TARGET day after the trade date without a
   report, oldest first. A day is ready when the ECB curve for it is stored or a later curve
   exists (the ECB skipped it, ADR-007). Otherwise exit 75 and the next trigger retries. The
   private option terms come from the `BOOK_PRIVATE_YAML_B64` secret and are checked against

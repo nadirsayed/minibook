@@ -36,6 +36,11 @@ what was fixed and what was decided.
 | 6 | Unattended daily publication not yet demonstrated: no scheduled run had happened at audit time. | To be verified on the first scheduled runs (13 Nov 2026). |
 | 7 | An earlier CI failure (finite-difference volga test). | Already fixed before the audit: the case is pinned and the test passes. |
 
+Later the same day (owner decision), the schedule moved off the top of the hour to two
+triggers an hour (:17 and :47); the in-job window became 13:00–19:00 Berlin, admitting the
+last trigger (18:47) in both seasons (ADR-027). This supersedes the 18:15 window of
+finding 2.
+
 PR #1 ([nadirsayed/minibook#1](https://github.com/nadirsayed/minibook/pull/1)) passed
 [push CI](https://github.com/nadirsayed/minibook/actions/runs/43409990079) and
 [PR CI](https://github.com/nadirsayed/minibook/actions/runs/43410059044) and was merged on

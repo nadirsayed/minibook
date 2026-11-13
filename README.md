@@ -182,7 +182,7 @@ pytest on every push.
 A risk report is produced for every TARGET business day after the trade date (2 November
 2026). It runs on the next TARGET business day, once the ECB has published its yield curve
 for the day (around noon CET); the scheduled GitHub Actions workflow "Daily report" retries
-every hour through the 18:05 Europe/Berlin trigger.
+twice an hour (:17 and :47) through the 18:47 Europe/Berlin trigger.
 
 - PDF reports, one per valuation date: [reports/](reports/)
 - Data outputs (valuations, Greeks, P&L explain, VaR/ES, run metadata): [output/](output/)
