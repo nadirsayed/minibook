@@ -1,0 +1,8 @@
+instrument_id,cashflows,actual,explained,unexplained,threshold,flagged,omitted_2nd_order,residual_after_2nd,note,eq_delta,eq_gamma,fx_delta,fx_gamma,rates,theta,vega
+IRS_EUR_5Y,0,-6212.21,-6210.17,-2.04,1000.00,False,0.00,-2.04,,0.00,0.00,0.00,0.00,-6135.16,-75.01,0.00
+FXF_EURUSD_6M,0,-24860.56,-24873.91,13.35,1243.03,False,0.00,13.35,,0.00,0.00,-25923.25,-136.27,1355.13,-169.52,0.00
+FXF_USDJPY_3M,0,2701.28,2699.38,1.90,1000.00,False,0.00,1.90,,0.00,0.00,2097.11,24.08,757.57,-179.38,0.00
+OPT_SX5E_C_3M_100,0,-16450.33,-16459.95,9.61,1000.00,False,4.11,5.51,,-17087.26,806.81,0.00,0.00,-31.02,-497.70,349.22
+OPT_DAX_P_6M_95,0,20411.46,19388.47,1022.99,1020.57,True,1123.79,-100.80,"unexplained +1,023 EUR; omitted vanna+volga (spot x EWMA-vol cross term, vol convexity) +1,124 EUR = 110% of it; remainder -101 EUR; largest revaluation step: equity +12,178 EUR",10763.14,1343.24,0.00,0.00,51.42,-176.27,7406.94
+OPT_CAC40_C_3M_105,0,6682.88,6711.02,-28.14,1000.00,False,-9.37,-18.77,,6649.96,-437.58,0.00,0.00,14.88,326.46,157.30
+OPT_FTSEMIB_P_6M_90,0,5854.32,5949.36,-95.04,1000.00,False,-93.10,-1.94,,7616.42,405.94,0.00,0.00,78.37,-457.41,-1693.96

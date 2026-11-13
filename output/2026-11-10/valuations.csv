@@ -1,0 +1,8 @@
+instrument_id,kind,description,maturity,pv_prev,pv
+IRS_EUR_5Y,IRS,"Payer EUR 10.0m, fixed 3.1134% vs EURIBOR6M (proxy fixings)",2031-11-04,-26498.74,6107.18
+FXF_EURUSD_6M,FX fwd,Buy EUR 5.0m vs USD at 1.12991,2027-05-04,-11596.34,-375.16
+FXF_USDJPY_3M,FX fwd,Sell USD 3.0m vs JPY at 156.89760,2027-02-05,-1430.25,-4978.49
+OPT_SX5E_C_3M_100,Option,"Long 50 SX5E call 3M, strike 100% of trade-date spot, EUR 10/pt; spot vs strike +2.5%",2027-02-02,127327.44,136574.73
+OPT_DAX_P_6M_95,Option,"Long 20 DAX put 6M, strike 95% of trade-date spot, EUR 5/pt; spot vs strike +6.7%",2027-05-03,48107.77,43179.31
+OPT_CAC40_C_3M_105,Option,"Short 30 CAC40 call 3M, strike 105% of trade-date spot, EUR 10/pt; spot vs strike -2.0%",2027-02-02,-37912.73,-41433.14
+OPT_FTSEMIB_P_6M_90,Option,"Long 40 FTSEMIB put 6M, strike 90% of trade-date spot, EUR 2.5/pt; spot vs strike +15.1%",2027-05-03,62379.57,53050.92

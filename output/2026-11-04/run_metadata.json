@@ -1,0 +1,106 @@
+{
+  "as_of": "2026-11-04",
+  "backtest_status": "insufficient observations (N = 1)",
+  "breaches": [
+    "OPT_DAX_P_6M_95",
+    "OPT_CAC40_C_3M_105",
+    "OPT_FTSEMIB_P_6M_90"
+  ],
+  "config_hash": "bfaab55a586dd413cab55fc2f8bdb691b419787fc14be78f5f48856653b82bea",
+  "data_first_fetched_utc": {
+    "ecb/fx": "2026-11-12T13:20:21.887823+00:00",
+    "ecb/yield_curve": "2026-11-12T13:20:03.055294+00:00",
+    "equities/index_close": "2026-11-12T14:18:57.639110+00:00",
+    "mof/jgb_cm": "2026-11-12T13:21:02.347974+00:00",
+    "treasury/par_curve": "2026-11-12T14:22:24.297158+00:00"
+  },
+  "forward_fills": [
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "1Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "2Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "3Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "4Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "5Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "6Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "7Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "8Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "9Y",
+      "target_date": "2026-11-03"
+    },
+    {
+      "age_days": 1,
+      "dataset": "mof/jgb_cm",
+      "obs_date": "2026-11-02",
+      "reason": "no jgb_cm observation for 2026-11-03; 2026-11-03 is a JP holiday",
+      "series": "10Y",
+      "target_date": "2026-11-03"
+    }
+  ],
+  "git_sha": "4523b7889ec09a60d7981d616b82cee1fe22f5d9",
+  "minibook_version": "0.1.0",
+  "previous": "2026-11-03",
+  "quality_flags": [],
+  "retrospective_fetch": true,
+  "run_at_utc": "2026-11-13T00:54:57.266277+00:00",
+  "run_seconds": 4.91
+}
