@@ -4,9 +4,12 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-13
+
 ### Fixed
 - Daily workflow uploads only the PDFs a run created or changed (no stale artifacts), and
-  the local window admits the final 18:05 Europe/Berlin trigger (PR #1, external audit).
+  the local window admits the last trigger (PR #1, external audit; window since revised
+  with the schedule, below).
 - README states exactly which outputs reproduce byte for byte (PR #1).
 - Two real index closes removed from documentation examples (PR #1; they remain in git
   history).
@@ -95,5 +98,6 @@ scheduled on GitHub Actions. December 2026 reports follow from the same code.
 - Project scaffold: uv/pyproject (Python 3.12), src layout, Typer CLI stubs
   (`init-book`, `fetch`, `run`, `backfill`), ruff, mypy --strict, pytest, pre-commit, CI.
 
-[Unreleased]: https://github.com/nadirsayed/minibook/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nadirsayed/minibook/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/nadirsayed/minibook/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/nadirsayed/minibook/releases/tag/v1.0.0
