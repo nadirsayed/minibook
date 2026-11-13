@@ -116,7 +116,18 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   Claude session; the owner re-registered it from their own account at 15:11 UTC (0474908,
   "47,17") and 15:15 UTC (34cdf32, back to "17,47"). Evidence so far: 0 scheduled runs
   through 15:25 UTC, including the 15:17 trigger after 220e4d5. First trigger after the
-  re-registration: 15:47 UTC. Result: pending (tonight's check).
+  re-registration: 15:47 UTC. **Result (17:31 UTC): evidence against.** Still 0 runs with
+  event `schedule`: none at 15:47, 16:17, 16:47 or 17:17 UTC after the owner's 34cdf32,
+  as before at 15:17 after 220e4d5. Caveat: GitHub documents that scheduled runs can be
+  delayed or dropped under load, and a new schedule may take time to register, so four
+  missed triggers do not exclude a slow registration. Next evidence: Monday 16 Nov.
+- **Manual run, 2026-11-13 17:31 UTC** (workflow_dispatch, owner-approved, NOT the
+  unattended proof): [run 43473649607](https://github.com/nadirsayed/minibook/actions/runs/43473649607)
+  produced 2026-11-12 (`produced: ['2026-11-12']`, 5.6 s) and the bot committed it
+  (9aefdeb) with the reports index. Yahoo fetch on the runner worked (2 new bars per index).
+  Artifact `reports-43473649607` holds only the new PDF (178 KB). Local reproduction:
+  valuations, greeks and pnl_explain CSVs byte-identical; VaR/ES JSON equal to ~1e-13
+  relative (summation order differs between CPUs).
 
 ## Next
 - 13 Nov evening: check the first scheduled Daily report runs. If the 12 Nov report was

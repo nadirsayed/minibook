@@ -104,8 +104,10 @@ uv run minibook run --date 2026-11-11
 On a fresh clone, `init-book` rebuilds the private option terms from your own copy of
 the index closes and writes them only if they match the committed digest. `run` writes
 `output/2026-11-11/` and `reports/2026-11-11.pdf` in about 5 seconds. With unchanged
-source observations, the numeric CSV and VaR/ES JSON outputs are byte-identical; the run
-metadata and PDFs contain fetch and run details and can differ. Index closes come from
+source observations, the CSV outputs are byte-identical; the VaR/ES figures agree to about
+1e-13 relative across machines (floating-point summation order differs between CPUs; on
+the same machine type they are byte-identical); the run metadata and PDFs contain fetch and
+run details and can differ. Index closes come from
 Yahoo Finance via yfinance, for personal, non-commercial use only.
 
 Other commands: `minibook backfill --start ... --end ...` (a range of TARGET days) and
