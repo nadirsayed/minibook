@@ -2,7 +2,8 @@ name: Daily report
 
 # ADR-001/027: the report for D is produced on the next TARGET business day once the ECB has
 # published the curve for D (~12:00 CET). Cron runs in UTC: hourly triggers at :05 from
-# 11:05 to 17:05 UTC cover 13:00-18:00 Europe/Berlin in both CET (UTC+1) and CEST (UTC+2).
+# 11:05 to 17:05 UTC cover 13:05-18:05 Europe/Berlin in both CET and CEST; the local
+# window filters the extra UTC trigger at the start or end of each season.
 # `minibook daily` checks the local window and the TARGET calendar itself, does nothing when
 # everything is up to date, and catches up on any missing day in order.
 on:
@@ -49,6 +50,7 @@ jobs:
           uv run python -c "from minibook.config.book import load_book; assert load_book().is_frozen"
 
       - name: Fetch and produce due reports
+        id: produce
         run: |
           set +e
           uv run minibook daily ${{ github.event_name == 'workflow_dispatch' && '--ignore-window' || '' }}
@@ -56,16 +58,26 @@ jobs:
           set -e
           if [ "$code" -eq 75 ]; then
             echo "::notice::ECB curve not published yet; the next hourly trigger retries."
-            exit 0
+          elif [ "$code" -ne 0 ]; then
+            exit "$code"
           fi
-          exit "$code"
+          # The checkout contains earlier reports. Archive only PDFs created or changed
+          # by this run, so a successful no-op cannot publish stale reports as new.
+          mkdir -p "$RUNNER_TEMP/new-reports"
+          for path in reports/*.pdf; do
+            if ! git ls-files --error-unmatch "$path" > /dev/null 2>&1 ||
+               ! git diff --quiet -- "$path"; then
+              cp "$path" "$RUNNER_TEMP/new-reports/"
+              echo "new_reports=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
 
       - name: Upload reports as artifact
+        if: steps.produce.outputs.new_reports == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: reports-${{ github.run_id }}
-          path: reports/*.pdf
-          if-no-files-found: ignore
+          path: ${{ runner.temp }}/new-reports/*.pdf
 
       - name: Commit outputs
         run: |

@@ -3,9 +3,9 @@
 The report model never holds index levels (by construction). This guard checks every string
 the PDF renders against the index levels of the day, the previous day and the trade date
 (including strikes, which are trade-date levels times a percentage), in the forms a number
-would be printed with decimals: ``6176.06``, ``6,176.06``, ``6176.1``, ``6,176.1``.
+would be printed with one or two decimals, with or without thousands separators.
 
-Integer renderings (``6,176``) are not checked at run time: an EUR amount can legitimately
+Integer renderings are not checked at run time: an EUR amount can legitimately
 coincide with a rounded index level, and a false alarm would block the daily report. The
 tests check integer forms too, on synthetic levels chosen not to collide.
 """
@@ -33,7 +33,7 @@ def find_levels(
 ) -> list[tuple[str, str]]:
     """Return (form, text) pairs for every forbidden form found in ``texts``.
 
-    Forms are matched as whole numeric tokens: "8233" inside "48233.12" is not a match.
+    Forms are matched as whole numeric tokens, not as substrings of larger numbers.
     """
     forms = sorted({f for lv in levels for f in level_forms(lv, integers)})
     patterns = [(f, re.compile(rf"(?<![\d.,]){re.escape(f)}(?![\d]|[.,]\d)")) for f in forms]

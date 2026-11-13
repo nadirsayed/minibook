@@ -99,10 +99,10 @@ uv run minibook run --date 2026-11-11
 `fetch --full` downloads the history since June 2023 into the git-ignored `data/raw/`.
 On a fresh clone, `init-book` rebuilds the private option terms from your own copy of
 the index closes and writes them only if they match the committed digest. `run` writes
-`output/2026-11-11/` and `reports/2026-11-11.pdf` in about 5 seconds. The data outputs
-are byte-identical to the committed ones; only the fetch timestamps in the report notes
-differ. Index closes come from Yahoo Finance via yfinance, for personal, non-commercial
-use only.
+`output/2026-11-11/` and `reports/2026-11-11.pdf` in about 5 seconds. With unchanged
+source observations, the numeric CSV and VaR/ES JSON outputs are byte-identical; the run
+metadata and PDFs contain fetch and run details and can differ. Index closes come from
+Yahoo Finance via yfinance, for personal, non-commercial use only.
 
 Other commands: `minibook backfill --start ... --end ...` (a range of TARGET days) and
 `minibook daily` (the scheduled job: catch up every missing day once the ECB curve is
@@ -178,7 +178,7 @@ pytest on every push.
 A risk report is produced for every TARGET business day after the trade date (2 November
 2026). It runs on the next TARGET business day, once the ECB has published its yield curve
 for the day (around noon CET); the scheduled GitHub Actions workflow "Daily report" retries
-every hour until 18:00 CET.
+every hour through the 18:05 Europe/Berlin trigger.
 
 - PDF reports, one per valuation date: [reports/](reports/)
 - Data outputs (valuations, Greeks, P&L explain, VaR/ES, run metadata): [output/](output/)
