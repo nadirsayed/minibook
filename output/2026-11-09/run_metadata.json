@@ -13,11 +13,11 @@
     "treasury/par_curve": "2026-11-12T14:22:24.297158+00:00"
   },
   "forward_fills": [],
-  "git_sha": "4273826cbc81c111df3c27caf370f475cd183521-dirty",
+  "git_sha": "ee94edb81f9214e28ea864c61f3876d6f19bf399-dirty",
   "minibook_version": "0.1.0",
   "previous": "2026-11-06",
   "quality_flags": [],
   "retrospective_fetch": true,
-  "run_at_utc": "2026-11-13T01:15:46.042904+00:00",
-  "run_seconds": 4.82
+  "run_at_utc": "2026-11-13T04:05:23.146114+00:00",
+  "run_seconds": 4.95
 }
