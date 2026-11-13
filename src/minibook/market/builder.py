@@ -17,7 +17,7 @@ source's market calendar. Example: Japanese Golden Week. The fill is still recor
 
 Curves: EUR from the ECB Svensson parameters (validated against the published SR_* rates),
 USD and JPY bootstrapped from par yields. Every curve gets the key-rate pillars inserted.
-Vol: EWMA proxy over closes dated on or before D. Equity spots are the closes on D.
+Vol: EWMA proxy over closes dated from data.history_start to D. Equity spots are the closes on D.
 """
 
 from __future__ import annotations
@@ -239,15 +239,19 @@ class SnapshotBuilder:
         picked = self._pick("equities", "index_close", underlyings, as_of)
         table = self._series("equities", "index_close")
         v = self.s.market.vol
+        # The EWMA recursion starts at data.history_start whatever the cache holds, so that
+        # caches fetched at different times give bit-identical vols (reproducibility).
+        start_day = np.datetime64(self.s.data.history_start, "D")
         vols = {}
         for u in underlyings:
             ser = table[u]
+            first = int(np.searchsorted(ser.dates, start_day, side="left"))
             if u not in self._vol_cache:
                 self._vol_cache[u] = ewma_vol_series(
-                    ser.vals, v.ewma_lambda, v.warmup_days, v.annualization_days
+                    ser.vals[first:], v.ewma_lambda, v.warmup_days, v.annualization_days
                 )
             k = int(np.searchsorted(ser.dates, np.datetime64(as_of, "D"), side="right")) - 1
-            vol = float(self._vol_cache[u][k])
+            vol = float(self._vol_cache[u][k - first]) if k >= first else float("nan")
             if not np.isfinite(vol):
                 raise MarketDataError(
                     f"{u}: EWMA vol needs {v.warmup_days + 1} returns on or before {as_of}"

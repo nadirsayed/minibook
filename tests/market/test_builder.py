@@ -141,3 +141,28 @@ def test_equity_fill_reason_uses_exchange_calendar(tmp_path: Path, settings: Set
     reasons = {f.series: f.reason for f in picked.fills}
     assert "XETRA holiday" in reasons["DAX"]
     assert "EURONEXT_PARIS business day (source gap)" in reasons["CAC40"]
+
+
+def test_ewma_ignores_closes_before_history_start(
+    market_store: RawStore, settings: Settings
+) -> None:
+    """Reproducibility: closes cached before data.history_start do not move the EWMA vol."""
+    d = date(2026, 11, 2)
+    before = SnapshotBuilder(market_store, settings).build(d, NO_DIVS)
+    start = settings.data.history_start
+    # SYNTHETIC wild closes dated before history_start (e.g. from an older, longer fetch).
+    days = pd.bdate_range(end=pd.Timestamp(start) - pd.Timedelta(days=1), periods=30)
+    rows = [
+        (x.date(), u, 500.0 + 400.0 * (i % 2))
+        for u in settings.equities.tickers
+        for i, x in enumerate(days)
+    ]
+    market_store.upsert(
+        "equities",
+        "index_close",
+        pd.DataFrame(rows, columns=["obs_date", "series", "value"]),
+        datetime(2026, 11, 7, 12, tzinfo=UTC),
+        Path("synthetic"),
+    )
+    after = SnapshotBuilder(market_store, settings).build(d, NO_DIVS)
+    assert after.vols == before.vols  # bit-identical

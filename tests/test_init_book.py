@@ -15,7 +15,7 @@ from minibook.data.fixings import FixingStore
 from minibook.init_book import FrozenTermsMismatchError, init_book
 from minibook.instruments.factory import BookNotFrozenError, build_instruments
 from minibook.market.builder import SnapshotBuilder
-from tests.conftest import PLACEHOLDER_DIV_YIELDS_TESTS_ONLY, ROOT
+from tests.conftest import PLACEHOLDER_DIV_YIELDS_TESTS_ONLY, ROOT, synthetic_equities
 
 TRADE = date(2026, 11, 2)
 CLOCK = lambda: datetime(2026, 11, 12, 15, 0, tzinfo=UTC)  # noqa: E731
@@ -119,3 +119,24 @@ def test_option_terms_refused_in_public_book(
     book_path.write_text(leaked)
     with pytest.raises(ValueError, match=r"must not be in book\.yaml"):
         load_book(book_path)
+
+
+def test_restore_private_terms_on_fresh_clone(
+    book_path: Path, market_store: RawStore, settings: Settings, tmp_path: Path
+) -> None:
+    """Fresh clone: book.yaml frozen, private file absent -> rebuilt and digest-checked."""
+    run(book_path, market_store, settings, tmp_path)
+    private = book_path.with_name("book.private.yaml")
+    original = private.read_text()
+    public = book_path.read_text()
+    private.unlink()
+    assert not load_book(book_path).is_frozen
+    assert run(book_path, market_store, settings, tmp_path) == "restored"
+    assert private.read_text() == original and book_path.read_text() == public
+    assert load_book(book_path).is_frozen
+    # Different trade-date closes (SYNTHETIC revision): digest differs, nothing written.
+    private.unlink()
+    synthetic_equities(market_store, list(settings.equities.tickers), seed=8)
+    with pytest.raises(FrozenTermsMismatchError, match="do not match private_terms_sha256"):
+        run(book_path, market_store, settings, tmp_path)
+    assert not private.exists()
