@@ -168,8 +168,8 @@ def standard_notes(retrospective: bool) -> tuple[str, ...]:
         "Vol proxy (b): the EWMA vol change of a day is driven by that day's squared return, so "
         "vega P&L and delta/gamma P&L are not independent. On big-move days the omitted "
         "vanna/volga terms dominate the unexplained P&L (diagnostic column), and the VaR vol "
-        "shocks rise with |move| in either direction (implied vol would jump in sell-offs), so "
-        "vega VaR is a lower bound.",
+        "shocks rise with the size of the move in either direction (implied vol would jump "
+        "in sell-offs), so vega VaR is a lower bound.",
         "Dividends: flat continuous yields are owner assumptions (look-ahead flagged). A flat q "
         "ignores the April-May dividend season: it overstates dividends for the 3M options and "
         "understates them for the 6M options.",

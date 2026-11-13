@@ -6,12 +6,12 @@
 ![mypy strict](https://img.shields.io/badge/mypy-strict-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-**A small multi-asset derivatives book, risk-managed every business day from real public
-market data.** minibook values a EUR interest rate swap, two FX forwards and four equity
-index options; computes their Greeks; explains the day's P&L factor by factor; measures
-1-day 99% VaR and 97.5% Expected Shortfall by full-revaluation historical simulation; and
-publishes a PDF risk report. It runs unattended on GitHub Actions and commits each day's
-report.
+**A small multi-asset derivatives book, valued and risk-reported every TARGET business day
+from real public market data.** minibook values a EUR interest rate swap, two FX forwards
+and four equity index options; computes their Greeks; explains the day's P&L factor by
+factor; measures 1-day 99% VaR and 97.5% Expected Shortfall by full-revaluation historical
+simulation; and publishes a PDF risk report. A scheduled GitHub Actions workflow produces
+and commits each day's report.
 
 Pricing, curves, calendars and risk are built from scratch with numpy/scipy. QuantLib is
 used only in the tests, as an independent cross-check.
@@ -19,10 +19,14 @@ used only in the tests, as an independent cross-check.
 **Latest reports: [reports/](reports/README.md)**: one PDF per TARGET business day since
 the trade date (2 November 2026), with the headline P&L, VaR and ES.
 
-<p align="center">
-  <img src="docs/img/report_2026-11-11_p1.png" width="49%" alt="Report page 1: executive summary and positions">
-  <img src="docs/img/report_2026-11-11_p4.png" width="49%" alt="Report page 4: VaR/ES histogram, history, worst scenarios and scenario check">
-</p>
+**Report page 1** (executive summary, key risks, positions), 11 November 2026:
+
+![Report page 1: executive summary, key risks and positions](docs/img/report_page1.png)
+
+**Report page 4** (VaR/ES distribution and history, standalone risk, worst scenarios,
+scenario check):
+
+![Report page 4: VaR/ES histogram and history, worst scenarios and scenario check](docs/img/report_page4.png)
 
 ## The book
 

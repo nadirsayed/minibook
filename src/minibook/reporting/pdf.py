@@ -17,6 +17,7 @@ import io
 from collections.abc import Sequence
 from pathlib import Path
 
+import pandas as pd
 from reportlab import rl_config
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_RIGHT
@@ -34,6 +35,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from minibook.instruments.base import Measure
 from minibook.reporting import charts
 from minibook.reporting.guard import check_no_levels
 from minibook.reporting.model import ReportData
@@ -120,6 +122,29 @@ def _eur(x: float) -> str:
     return f"{x:,.0f}"
 
 
+KEY_DV01_CCYS = ("EUR", "USD", "JPY")
+
+
+def _key_risks(greeks: pd.DataFrame) -> str:
+    """One line of book totals: DV01 per currency, equity cash delta (1%), vega (1 vol pt).
+
+    DV01 = sum of the parallel ``dv01`` rows of risk factor ``PAR:<ccy>`` (EUR per +1 bp);
+    equity delta = sum of ``delta_1pct`` on ``EQ:*`` factors (EUR per +1% on every index);
+    vega = sum of ``vega_1pt`` (EUR per +1 vol point on every index).
+    """
+    m, f, v = greeks["measure"], greeks["risk_factor"], greeks["value"]
+    dv01 = " / ".join(
+        f"{c} {_eur(float(v[(m == Measure.DV01.value) & (f == f'PAR:{c}')].sum()))}"
+        for c in KEY_DV01_CCYS
+    )
+    eq_delta = float(v[(m == Measure.DELTA_1PCT.value) & f.str.startswith("EQ:")].sum())
+    vega = float(v[m == Measure.VEGA_1PT.value].sum())
+    return (
+        f"<b>Key risks</b> (EUR): DV01 per +1 bp {dv01}; equity cash delta per +1% "
+        f"{_eur(eq_delta)}; vega per +1 vol pt {_eur(vega)}."
+    )
+
+
 def _with_ci(value: float, ci: tuple[float, float] | None) -> str:
     """'74,139 [64.5k-80.0k]': figure and its bootstrap interval, compactly."""
     if ci is None:
@@ -197,7 +222,8 @@ def _summary(w: _Writer, d: ReportData) -> None:
     per = d.explain.per_instrument
     book = d.explain.book
     pv = float(per["pv_curr"].sum())
-    unexpl_pct = (100 * book["unexplained"] / book["actual"]) if book["actual"] else 0.0
+    # Share of |actual|: the sign is the unexplained's own (+159 on -49,563 is +0.3%).
+    unexpl_pct = (100 * book["unexplained"] / abs(book["actual"])) if book["actual"] else 0.0
     var_l, es_l = f"VaR {_pct(d.var.var_confidence)}", f"ES {_pct(d.var.es_confidence)}"
     w.add(
         w.p(f"minibook daily risk report - {d.as_of}", w.h1),
@@ -228,12 +254,12 @@ def _summary(w: _Writer, d: ReportData) -> None:
                 w.small,
             )
         )
-    w.add(Spacer(1, 3))
+    w.add(w.p(_key_risks(d.greeks), w.small), Spacer(1, 3))
     flagged = per[per["flagged"]]
     w.add(
         w.p(
             f"<b>Breaches:</b> {len(flagged)} instrument(s) above the unexplained threshold "
-            f"(max(5% of |actual|, EUR 1,000))"
+            "(max(5% of abs(actual P&amp;L), EUR 1,000))"
             + (": " + ", ".join(flagged["instrument_id"]) if len(flagged) else ".")
         )
     )

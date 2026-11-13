@@ -11,6 +11,14 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - Two real index closes removed from documentation examples (PR #1; they remain in git
   history).
 
+### Changed
+- Report page 1: the unexplained % is relative to abs(actual P&L), so it carries the
+  unexplained's own sign; the breach threshold reads "abs(actual P&L)" (the pipe
+  characters rendered like the letter l); new "Key risks" line (DV01 per currency, equity
+  cash delta per +1%, vega per +1 vol point). Reports 3-11 Nov 2026 regenerated.
+- README: readable full-width report screenshots; opening sentence says "valued and
+  risk-reported" (the book is not hedged).
+
 ### Added
 - docs/audit.md: external audit of 2026-11-13, findings, fixes and decisions.
 - Disclosure (ADR-019, owner decision): index levels are not published but can be

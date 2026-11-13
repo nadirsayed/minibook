@@ -214,3 +214,23 @@ def test_flagged_scenario_is_listed_and_kept(tmp_path: Path, settings: Settings)
     assert f"{day} *" in text  # marked in the worst-scenario table
     assert var.var_ex_flagged is not None and var.var_ex_flagged != var.var
     assert "without them" in text and "(no cherry-picking)" in text
+
+
+def test_summary_signs_breach_text_and_key_risks(tmp_path: Path, settings: Settings) -> None:
+    data, levels = report_data(settings)
+    # SYNTHETIC case like 11 Nov: positive unexplained on a negative actual reads positive.
+    per = data.explain.per_instrument.copy()
+    for col, total in (("actual", -49_563.0), ("explained", -49_722.0), ("unexplained", 159.0)):
+        per[col] = [total] + [0.0] * (len(per) - 1)
+    explain = dataclasses.replace(data.explain, per_instrument=per)
+    out = tmp_path / "r.pdf"
+    render(dataclasses.replace(data, explain=explain), out, levels)
+    text = " ".join(pdf_text(out)[1].split())
+    assert "159 (+0.3%)" in text
+    assert "max(5% of abs(actual P&L), EUR 1,000)" in text and "|" not in text
+    g = data.greeks
+    dv01_eur = g[(g["measure"] == "dv01") & (g["risk_factor"] == "PAR:EUR")]["value"].sum()
+    vega = g[g["measure"] == "vega_1pt"]["value"].sum()
+    assert f"Key risks (EUR): DV01 per +1 bp EUR {dv01_eur:,.0f} / USD" in text
+    assert "/ JPY 0;" in text  # no JPY instrument in the synthetic book
+    assert f"vega per +1 vol pt {vega:,.0f}." in text
