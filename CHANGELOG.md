@@ -4,6 +4,18 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+### Fixed
+- Daily workflow uploads only the PDFs a run created or changed (no stale artifacts), and
+  the local window admits the final 18:05 Europe/Berlin trigger (PR #1, external audit).
+- README states exactly which outputs reproduce byte for byte (PR #1).
+- Two real index closes removed from documentation examples (PR #1; they remain in git
+  history).
+
+### Added
+- docs/audit.md: external audit of 2026-11-13, findings, fixes and decisions.
+- Disclosure (ADR-019, owner decision): index levels are not published but can be
+  recovered from the published option outputs; stated in the README and in every report.
+
 ## [1.0.0] - 2026-11-13
 
 First complete release: daily valuation, Greeks, P&L explain, VaR/ES and PDF report,

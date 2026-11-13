@@ -205,6 +205,10 @@ returns.
 - **Step attribution depends on the order** of the steps (always stated in the report).
 - **Backtesting needs 250 observations**; until then the report shows the exception count
   only.
+- **Index levels are not published here, but they can be recovered** from the published
+  option outputs (PV, strike as % of spot, vol, dividend yield, rates) by inverting
+  Black-Scholes. Raw index data is never committed; index closes are public facts
+  ([ADR-019](docs/decisions.md), [external audit](docs/audit.md)).
 - **Equity closes come from Yahoo Finance** (personal use, local cache, never committed);
   Swiss-holiday gaps in the Euro Stoxx 50 series are forward-filled and logged.
 
@@ -243,7 +247,7 @@ Details and terms of use: [docs/data_sources.md](docs/data_sources.md).
 | `config/` | `settings.yaml` (every parameter), `book.yaml` (positions and frozen terms) |
 | `tests/` | offline tests; `fixtures/http/` holds recorded real responses |
 | `output/`, `reports/` | daily outputs and PDFs, committed by the workflow |
-| `docs/` | methodology, decisions (ADRs), data sources and terms |
+| `docs/` | methodology, decisions (ADRs), data sources and terms, external audit |
 
 ## How this project was built
 

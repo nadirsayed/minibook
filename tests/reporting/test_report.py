@@ -133,6 +133,7 @@ def test_report_is_valid_and_within_budget(tmp_path: Path, settings: Settings) -
     assert "insufficient observations (N = 7)" in text  # owner rule, never a zone
     assert "zone" not in text.lower().replace("time zone", "")
     assert "Vol proxy (a)" in text and "Vol proxy (b)" in text
+    assert "can be recovered from the published option outputs" in " ".join(text.split())
     assert "Backfilled report" in text and "git 0123456789abcdef" in text
     assert "strike 100% of" in text
     # Index-level rule: no form of a synthetic level, including integers, in rendered text

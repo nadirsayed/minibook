@@ -84,6 +84,14 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
     as DV01/VaR pillar shocks. theta_1d stays in the report.
 21. **Never filter or alter a VaR scenario without an owner decision.**
 
+## Approved owner decisions (round 6, external audit 2026-11-13, docs/audit.md)
+22. **Disclosure, option A (ADR-019).** Index levels are not published, but they can be
+    recovered from the published option outputs; this is stated in the README limitations
+    and in every report. Keep the index-level guard. Never write a real index level into any
+    committed file, docs and examples included (two did leak; they stay in history).
+23. **v1.0.1** only after the 12 Nov 2026 report is published unattended by the scheduled
+    workflow; otherwise report what failed first.
+
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.
 - Forward-fill at most 3 calendar days, logging observation date, age and reason; beyond

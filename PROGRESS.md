@@ -101,7 +101,13 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   run 5 s), which exposed two gaps, now fixed: init-book restore of the private terms, and
   EWMA seeding at history_start (data outputs now byte-identical across clones).
 
+- **External audit (2026-11-13)**, [docs/audit.md](docs/audit.md): PR #1 merged (stale
+  artifact upload, 18:05 retry, reproducibility wording, two leaked closes removed);
+  disclosure option A recorded in ADR-019, README and report notes.
+
 ## Next
+- 13 Nov evening: check the first scheduled Daily report runs. If the 12 Nov report was
+  published unattended, tag v1.0.1 (PR #1 + disclosure note); otherwise report first.
 - Watch the scheduled runs through December (22 TARGET days).
 - v1.0.0 tagged on 2026-11-13. December runs use the tagged code; fixes go to
   [Unreleased] and a patch release if needed. The 31 Dec report arrives on 4 or 5 Jan 2027.

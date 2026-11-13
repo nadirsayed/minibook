@@ -275,7 +275,7 @@ of the option terms, which reveals nothing about them) makes a wrong or corrupte
 fail loudly instead of pricing other strikes. People who clone the repo reproduce the file
 with `minibook fetch` + `minibook init-book`.
 
-## ADR-019: Owner assumptions; no index levels in anything committed
+## ADR-019: Owner assumptions; no index levels in anything committed (recoverable, disclosed)
 
 **Dividend yields (owner, 2026-11-12).** SX5E, CAC 40 and FTSE MIB yields are *documented
 model assumptions* provided by the owner, not sourced data (the STOXX terms cover their
@@ -289,6 +289,24 @@ committed, including PDF reports and CSV outputs. Option strikes are shown as % 
 trade-date spot. Index moves are shown as % returns, never as index levels or level history.
 PVs, Greeks, P&L and VaR (EUR amounts) are fine. M7/M8 add an automated check that no index
 level appears in committed outputs.
+
+**Recoverability (owner, 2026-11-13, after the external audit, [docs/audit.md](audit.md)).**
+The audit reconstructed all four 11 Nov 2026 index closes from the published option
+outputs: each option's PV, strike as % of trade-date spot, EWMA vol, dividend yield and
+the rate curves determine the spot by inverting Black-Scholes. Decision (option A): keep
+publishing the option outputs and disclose that index levels can be recovered from them
+(README limitations and a note in every report).
+- Rationale: this ADR exists to avoid redistributing Yahoo/STOXX data files, which minibook
+  still does not do (raw data stays in the git-ignored local cache). Index closes are public
+  facts, published daily by the index providers and the press.
+- Rejected: keeping the option detail private (audit option C). It would not undo the
+  disclosure: the 3-11 Nov 2026 reports with option detail are already in git history, and
+  history is never rewritten (CLAUDE.md 18). Aggregating the option risk or adding noise
+  would not prevent recovery either and would degrade the report.
+- The index-level guard stays: it still prevents direct publication of a level.
+- Two real closes were written into committed files by mistake (an example in this file,
+  ADR-027 guard calibration, and one in the `reporting/guard.py` docstring). PR #1 removed
+  them from the current files. They remain in git history, which is not rewritten.
 
 ## ADR-020: Greek conventions
 
