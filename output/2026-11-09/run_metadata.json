@@ -4,7 +4,7 @@
   "breaches": [
     "OPT_FTSEMIB_P_6M_90"
   ],
-  "config_hash": "bfaab55a586dd413cab55fc2f8bdb691b419787fc14be78f5f48856653b82bea",
+  "config_hash": "b8f4cdf4a95670a7a4c653b1a4e4a1ae104d63aa2f40fd39d67eff0e7ef129e8",
   "data_first_fetched_utc": {
     "ecb/fx": "2026-11-12T13:20:21.887823+00:00",
     "ecb/yield_curve": "2026-11-12T13:20:03.055294+00:00",
@@ -13,11 +13,11 @@
     "treasury/par_curve": "2026-11-12T14:22:24.297158+00:00"
   },
   "forward_fills": [],
-  "git_sha": "4523b7889ec09a60d7981d616b82cee1fe22f5d9",
+  "git_sha": "4273826cbc81c111df3c27caf370f475cd183521-dirty",
   "minibook_version": "0.1.0",
   "previous": "2026-11-06",
   "quality_flags": [],
   "retrospective_fetch": true,
-  "run_at_utc": "2026-11-13T00:55:12.693230+00:00",
-  "run_seconds": 4.71
+  "run_at_utc": "2026-11-13T01:15:46.042904+00:00",
+  "run_seconds": 4.82
 }

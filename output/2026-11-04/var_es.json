@@ -1,4 +1,5 @@
 {
+  "artefact_checked": true,
   "as_of": "2026-11-04",
   "ci_level": 0.9,
   "delta_gamma_es": 71537.4895067375,
@@ -10,7 +11,26 @@
     75968.37006855321
   ],
   "es_confidence": 0.975,
+  "es_ex_flagged": 69357.99380753575,
   "n_scenarios": 500,
+  "scenario_flags": [
+    {
+      "gap_move_bp": -9.438609549999995,
+      "pending": false,
+      "pillar": "SR_2Y",
+      "reversal_bp": 9.761872870000008,
+      "scenario_date": "2026-10-02",
+      "z": -6.6259714611086
+    },
+    {
+      "gap_move_bp": -9.995449090000008,
+      "pending": false,
+      "pillar": "SR_5Y",
+      "reversal_bp": 11.050446939999986,
+      "scenario_date": "2026-10-02",
+      "z": -6.980233045280091
+    }
+  ],
   "standalone": {
     "FXF_EURUSD_6M": {
       "es": 49884.86802923132,
@@ -47,6 +67,7 @@
     77790.44831120761
   ],
   "var_confidence": 0.99,
+  "var_ex_flagged": 72075.12740110052,
   "worst": [
     {
       "FXF_EURUSD_6M": -31665.13250275367,
