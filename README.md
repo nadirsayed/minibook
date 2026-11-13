@@ -13,6 +13,23 @@ uv run minibook --help
 uv run pytest
 ```
 
+## How this project was built
+
+I defined the goal and scope of minibook and directed its development. The
+specification (the book, the data sources, the methodology, the tests and the
+definition of done) was drafted with Claude, Anthropic's AI assistant, and refined
+through review. I made the final call on each methodological and data decision,
+for example moving the trade date, making the U.S. Treasury the primary USD source,
+keeping Yahoo-derived terms out of this public repository, switching DV01 to
+central differences and showing no backtesting zone below 250 observations. Each
+decision is recorded in [docs/decisions.md](docs/decisions.md). I reviewed every
+milestone before the next one started.
+
+The code, the tests and the first drafts of the documentation were written with
+[Claude Code](https://claude.com/claude-code), Anthropic's coding agent, working
+from the specification and the standing instructions in [CLAUDE.md](CLAUDE.md).
+The git history attributes its work: as author up to M6, as co-author from M7 on.
+
 ## Data sources and attribution
 
 - Euro area yield curve (Svensson parameters), euro foreign exchange reference rates, €STR:
