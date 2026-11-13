@@ -143,6 +143,10 @@ def test_schedule_helpers(settings: Settings, market_store: RawStore, tmp_path: 
     assert in_window(datetime(2026, 11, 9, 12, 30, tzinfo=UTC), settings)
     assert not in_window(datetime(2026, 11, 9, 11, 30, tzinfo=UTC), settings)
     assert in_window(datetime(2026, 7, 6, 11, 30, tzinfo=UTC), settings)
+    # The final :05 UTC trigger must be admitted in either daylight-saving season.
+    assert in_window(datetime(2026, 11, 9, 17, 5, tzinfo=UTC), settings)
+    assert in_window(datetime(2026, 7, 6, 16, 5, tzinfo=UTC), settings)
+    assert not in_window(datetime(2026, 7, 6, 17, 5, tzinfo=UTC), settings)
     assert due_dates(TRADE, date(2026, 11, 5), tmp_path) == [date(2026, 11, 3), date(2026, 11, 4)]
     (tmp_path / "2026-11-03").mkdir()
     (tmp_path / "2026-11-03" / "report.pdf").write_bytes(b"%PDF")

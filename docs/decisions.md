@@ -465,17 +465,17 @@ in the report with VaR/ES with and without it, and detect such days automaticall
   history of VaR and P&L, and a fresh runner has none. Every text output passes the
   index-level guard. The raw market data stays out of git, in the Actions cache.
 - **Guard calibration (evidence).** A strict scan of the Nov 2026 outputs found one
-  integer-form match: an EUR amount of 8,048 (a step attribution) equal to a rounded index
-  close of 8,047.69. This confirms that the run-time guard must check decimal forms only, as
-  whole numeric tokens. Integer forms are checked in tests on synthetic levels.
+  integer-form coincidence between an EUR step-attribution amount and a rounded index
+  close. This confirms that the run-time guard must check decimal forms only, as whole
+  numeric tokens. Integer forms are checked in tests on synthetic levels.
 - **Schedule** (`.github/workflows/daily.yml`): hourly UTC triggers 11:05–17:05 Mon–Fri.
-  `minibook daily` acts only inside 13:00–18:00 Europe/Berlin (CET/CEST handled by
+  `minibook daily` acts only inside 13:00–18:15 Europe/Berlin (CET/CEST handled by
   zoneinfo) on TARGET days. It catches up every TARGET day after the trade date without a
   report, oldest first. A day is ready when the ECB curve for it is stored or a later curve
   exists (the ECB skipped it, ADR-007). Otherwise exit 75 and the next trigger retries. The
   private option terms come from the `BOOK_PRIVATE_YAML_B64` secret and are checked against
   the committed digest. Outputs are committed by `github-actions[bot]` and the PDFs are
-  uploaded as artifacts.
+  uploaded as artifacts only when newly produced or changed.
 - **Retrospective fetch disclosure**: a report is flagged as backfilled when any data used
   for D was first fetched after D's next TARGET business day.
 - **Known risk**: Yahoo Finance may throttle GitHub-hosted runners. A failed equity fetch

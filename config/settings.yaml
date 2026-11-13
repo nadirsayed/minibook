@@ -164,6 +164,6 @@ pipeline:
   # is triggered hourly and checks the local window itself.
   timezone: Europe/Berlin
   window_start_local: "13:00"
-  window_end_local: "18:00"
+  window_end_local: "18:15" # include the final 18:05 trigger (and ordinary queue delay)
   # Exit code when today's report cannot be produced yet (ECB curve not published).
   not_ready_exit_code: 75
