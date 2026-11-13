@@ -127,6 +127,11 @@ var:
   var_confidence: 0.99      # VaR99 = -(ceil(0.01 N)-th worst P&L)
   es_confidence: 0.975      # ES97.5 = -mean(worst ceil(0.025 N) P&Ls)
   n_worst: 5                # worst scenarios shown in the report
+  # Sampling uncertainty (owner, after M6): nonparametric bootstrap of the 500 scenario
+  # P&Ls, seeded for deterministic outputs; two-sided interval.
+  bootstrap_resamples: 2000
+  bootstrap_seed: 20261102
+  bootstrap_ci: 0.90
 backtest:
   # Basel Committee (1996), "Supervisory framework for the use of backtesting in conjunction
   # with the internal models approach to market risk capital requirements": 99% VaR over

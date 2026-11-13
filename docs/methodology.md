@@ -126,15 +126,24 @@ option's value depends on the assumption.
 
     Actual      = PV_t(mkt_t) − PV_{t−1}(mkt_{t−1}) + CF(t−1, t]
     Explained   = Σ [D_1% (u/0.01) + ½ G_1% (u/0.01)²]   (equity spots, EUR/USD, EUR/JPY)
-                + Σ Vega_1pt (Δσ/0.01) + Theta_1d Δt + Σ_ccy Σ_k KR_DV01_k Δr_k(bp)
+                + Σ Vega_1pt (Δσ/0.01) + Theta_period + Σ_ccy Σ_k KR_DV01_k Δr_k(bp)
     Unexplained = Actual − Explained
 
 The Greeks are from t−1, u = ΔS/S, and Δt is in calendar days (3 over a weekend).
 
-**Weekend value dates (known gap, ADR-022).** theta_1d × Δt uses a one-day roll from t−1.
-For FX forwards, a Friday roll does not move the spot value date, but the real Friday →
-Monday window does. The resulting value-date carry (about −0.4k EUR per forward on 9 Nov
-2026) appears as unexplained P&L. A period-theta fix is proposed.
+**Theta over the actual window (ADR-022).** The theta term is the *period theta*:
+
+    Theta_period = PV(mkt_{t−1} rolled to t) + CF(t−1, t] − PV(mkt_{t−1})
+
+**"Market held constant"** means, throughout minibook, constant *zero rates per tenor*
+(the curve keeps its shape in time to maturity, so instruments roll down it) with spots, FX,
+vols, dividend yields and fixings unchanged. Fixings due on t−1 are set first. This is the
+convention of theta_1d (one day), of the period theta (the actual window), and of the
+tenor-based pillar shocks in DV01, key-rate DV01 and VaR, so every measure moves the same
+coordinates. Over a weekend or holiday the period theta contains effects a one-day theta
+times Δt would miss, such as the jump of an FX forward's spot value date (on 9 Nov 2026 this
+removed ~0.8k EUR of unexplained P&L from the two FX forwards). theta_1d is still reported
+as the per-day sensitivity.
 
 **What remains unexplained, and why.** Third-order spot terms (cubic in u). The cross and
 convexity terms the formula omits: vanna (spot × vol), volga (vol²), charm (spot × time),
@@ -188,6 +197,21 @@ First real run (D = 11 Nov 2026, scenarios 26 Nov 2024 – 11 Nov 2026, owner di
 assumptions): VaR99 = EUR 74,139, ES97.5 = EUR 70,730, Σ standalone VaR = EUR 229,244,
 diversification = EUR 155,105. Delta-gamma VaR = EUR 73,782 (0.5% below full revaluation).
 The worst scenario is 2 Oct 2026 (−83,321, mostly the payer swap).
+
+**Sampling noise: VaR is noisier than ES.** VaR99 rests on a single order statistic, the
+5th worst of 500 P&Ls, so it can jump when one scenario enters or leaves the window. ES97.5
+averages the worst 13. The report gives seeded, deterministic bootstrap intervals (2,000
+resamples of the 500 scenario P&Ls, seed in `config/settings.yaml`, 90% two-sided). On
+11 Nov 2026: VaR99 74,139 (90% CI 64,476 – 80,003, width 21% of the level) vs ES97.5
+70,730 (63,887 – 75,729, width 17%). The i.i.d. bootstrap of an extreme quantile is crude
+(bootstrap VaRs can only take sample values), so these intervals indicate noise rather
+than exact coverage.
+
+**Scenario check: 2 Oct 2026 (worst scenario, investigated, not altered).** See ADR-026.
+The EUR AAA curve fell 11.5/13.6/12.8 bp (2Y/5Y/10Y) on that day, against 2.0/3.6/7.7 bp for
+the ECB all-ratings curve. Over 1 → 5 Oct both curves fell by similar amounts, so the rally
+is real, but the AAA curve concentrated it on 2 Oct, with a 4.7σ jump in its Svensson
+BETA3. Most of the AAA vs all-ratings divergence reversed on 5–6 Oct.
 
 Backtesting (exceptions, Kupiec POF, Basel traffic light) follows ADR-024: with fewer than
 250 observations the report states "insufficient observations (N = x)".

@@ -83,6 +83,10 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   deterministic bytes; real 11 Nov render reviewed page by page (local only, not committed).
   210 tests, 98% coverage.
 
+- **M6 review (owner, 2026-11-13)**: period theta in the explain (9 Nov FX unexplained
+  -467.5 -> -55.5 and -359.3 -> -0.9 EUR); worst scenario 2 Oct investigated (ADR-026,
+  kept); seeded bootstrap 90% CIs for VaR99/ES97.5 (VaR noisier: 21% vs 17% width).
+
 ## Next
 - M8 pipeline + CLI `run --date` / `backfill`: outputs (valuations.csv, greeks.csv,
   pnl_explain.csv, var_es.json, report.pdf, run_metadata.json) with the index-level guard
@@ -92,5 +96,5 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
 ## Open issues (owner)
 1. **Yahoo ^STOXX50E gaps** on Swiss holidays (ADR-013): forward-filled as "source gap".
    Fine for now; a better SX5E close source would remove them.
-2. **Theta over weekends/holidays** (ADR-022): proposal to use the period theta (1-step
-   revaluation over [t-1, t]) in the explain instead of theta_1d x dt. Owner decision.
+2. **Worst scenario 2 Oct 2026** (ADR-026): kept unaltered; owner to choose among options
+   (keep / independent AAA cross-check / report flag).

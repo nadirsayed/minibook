@@ -173,6 +173,9 @@ class VarSettings(_Frozen):
     var_confidence: float = Field(gt=0.0, lt=1.0)
     es_confidence: float = Field(gt=0.0, lt=1.0)
     n_worst: int = Field(gt=0)
+    bootstrap_resamples: int = Field(gt=0)
+    bootstrap_seed: int
+    bootstrap_ci: float = Field(gt=0.0, lt=1.0)
 
 
 class BacktestSettings(_Frozen):

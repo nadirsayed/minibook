@@ -11,7 +11,7 @@ With u = ΔS/S for spots and EUR/ccy FX rates, Δσ in decimal, Δr in bp at eac
 
     Explained_i = Σ_u [ D_1% (u/0.01) + ½ G_1% (u/0.01)² ]          equity and FX
                 + Σ_u Vega_1pt (Δσ/0.01)
-                + Theta_1d Δt
+                + Theta_period            (revaluation t-1 -> t, market held at t-1)
                 + Σ_k KR_DV01_k Δr_k                               EUR, USD, JPY
 
     Unexplained_i = Actual_i - Explained_i
@@ -42,6 +42,7 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import date
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
@@ -109,8 +110,35 @@ def market_moves(prev: MarketSnapshot, curr: MarketSnapshot) -> MarketMoves:
     return MarketMoves(dt, returns, vols, rates)
 
 
-def explain_components(greeks_prev: pd.DataFrame, moves: MarketMoves) -> pd.DataFrame:
-    """Explained P&L by instrument, component and risk factor (long table, EUR)."""
+def period_theta(
+    insts: Sequence[Instrument], prev: MarketSnapshot, curr_date: date
+) -> dict[str, float]:
+    """Time P&L from t-1 to t with the market held at t-1 (owner decision, ADR-022).
+
+        Theta_period = PV(mkt_{t-1} rolled to t) + CF(t-1, t] - PV(mkt_{t-1})
+
+    "Market held constant" = zero rates per tenor (roll-down), spots, FX, vols and fixings
+    unchanged; fixings due on t-1 are set first. This is the same convention as theta_1d
+    and as the tenor-based pillar shocks of DV01 and VaR, but over the actual window, so
+    weekend and holiday effects (e.g. FX spot value-date jumps) are inside it.
+    """
+    prev = with_todays_fixings(insts, prev)
+    rolled = prev.roll((curr_date - prev.as_of).days)
+    out = {}
+    for i in insts:
+        cash = sum(cf.amount_eur for cf in i.cashflows(prev.as_of, rolled.as_of, rolled))
+        out[i.id] = i.pv(rolled) + cash - i.pv(prev)
+    return out
+
+
+def explain_components(
+    greeks_prev: pd.DataFrame, moves: MarketMoves, theta: dict[str, float] | None = None
+) -> pd.DataFrame:
+    """Explained P&L by instrument, component and risk factor (long table, EUR).
+
+    ``theta`` (period theta per instrument) replaces theta_1d x Δt when given (the daily
+    explain); without it, theta_1d x Δt is used (Δt = 0 in delta-gamma VaR).
+    """
     rows: list[tuple[str, Component, str, float]] = []
     for inst_id, m, factor, value in zip(
         greeks_prev["instrument_id"].astype(str).tolist(),
@@ -122,7 +150,8 @@ def explain_components(greeks_prev: pd.DataFrame, moves: MarketMoves) -> pd.Data
         measure = Measure(m)
         kind = factor.split(":", 1)[0]
         if measure is Measure.THETA_1D:
-            rows.append((inst_id, Component.THETA, factor, value * moves.dt_days))
+            period = value * moves.dt_days if theta is None else theta[inst_id]
+            rows.append((inst_id, Component.THETA, factor, period))
         elif measure in (Measure.DELTA_1PCT, Measure.GAMMA_1PCT):
             x = moves.returns[factor] / PCT
             is_delta = measure is Measure.DELTA_1PCT
@@ -256,7 +285,7 @@ def explain(
     if greeks_prev is None:
         greeks_prev = book_greeks(insts, prev, risk)
     moves = market_moves(prev, curr)
-    comps = explain_components(greeks_prev, moves)
+    comps = explain_components(greeks_prev, moves, period_theta(insts, prev, curr.as_of))
     cash = {
         i.id: sum(cf.amount_eur for cf in i.cashflows(prev.as_of, curr.as_of, curr)) for i in insts
     }

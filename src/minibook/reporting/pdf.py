@@ -375,12 +375,19 @@ def _risk(w: _Writer, d: ReportData) -> None:
         else f"; delta-gamma {var_l} {_eur(v.delta_gamma_var)}, "
         f"{es_l} {_eur(v.delta_gamma_es or 0)}"
     )
+    ci = ""
+    if v.var_ci is not None and v.es_ci is not None and v.ci_level is not None:
+        ci = (
+            f" Bootstrap {_pct(v.ci_level)} intervals: {var_l} {_eur(v.var_ci[0])} to "
+            f"{_eur(v.var_ci[1])}, {es_l} {_eur(v.es_ci[0])} to {_eur(v.es_ci[1])} "
+            "(VaR rests on one order statistic, ES on an average, so VaR is noisier)."
+        )
     w.add(
         w.p(
             f"<b>{var_l}</b> {_eur(v.var)}, <b>{es_l}</b> {_eur(v.es)} (EUR, positive = loss). "
             f"Sum of standalone {var_l}: {_eur(float(v.standalone['var'].sum()))}; "
             f"diversification benefit {_eur(v.diversification_var)}{dg}. ES and VaR are at "
-            "different confidence levels, so ES can be below VaR."
+            "different confidence levels, so ES can be below VaR." + ci
         )
     )
     rows = [[i, _eur(float(r["var"])), _eur(float(r["es"]))] for i, r in v.standalone.iterrows()]

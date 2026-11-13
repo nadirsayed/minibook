@@ -5,6 +5,7 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ## [Unreleased]
 
 ### Added
+- Seeded bootstrap confidence intervals for VaR99 and ES97.5 (shown in the report).
 - M7 PDF report (<= 5 pages): summary, positions, Greeks + key-rate charts, P&L waterfall
   with breach notes and step attribution, VaR/ES histogram and history, worst scenarios,
   market moves; notes and sources; index-level guard; deterministic output.
@@ -33,6 +34,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 - CLAUDE.md with standing instructions and owner decisions; docs/data_sources.md.
 
 ### Changed
+- P&L explain uses the period theta (revaluation t-1 -> t, market held at t-1) instead of
+  theta_1d x calendar days (owner, ADR-022).
 - DV01 and key-rate DV01 are central differences (owner).
 - Snapshot builder: indexed as-of lookups and one-pass EWMA (22x faster, identical results).
 - Step attribution accepts any order.

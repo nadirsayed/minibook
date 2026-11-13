@@ -348,7 +348,7 @@ visible.
   central difference. (With the original one-sided DV01 it was ½ PV'' Δ (Δ − 1 bp), which
   vanishes at exactly 1 bp.)
 - Step attribution is order-dependent (methodology §7.1, worked example on 9 Nov 2026).
-- **Known gap: theta × Δt over weekends/holidays (owner decision pending).** theta_1d is a
+- **Weekend/holiday theta (resolved, owner 2026-11-13).** Original finding: theta_1d is a
   one-day roll from t−1. On a Friday, the roll to Saturday keeps the same FX spot value date,
   so theta_1d × 3 misses the jump of the spot value date over the weekend (and over US/JP
   holidays), which actual P&L contains. On Mon 9 Nov 2026 this was −412 EUR (EUR/USD 6M,
@@ -356,6 +356,13 @@ visible.
   from Tue 10 to Thu 12 Nov over the US holiday of 11 Nov. Proposed fix: in the explain,
   replace theta_1d × Δt with the period theta PV(t−1 rolled to t) + CF − PV(t−1), the
   revaluation "time" step, while still reporting theta_1d per day.
+  **Decision:** the explain uses the period theta, a one-step revaluation from t−1 to t
+  with the market held at t−1 (zero rates per tenor, so roll-down is included; spots, FX,
+  vols and fixings unchanged; today's fixings set; cashflows of the window included).
+  theta_1d stays in the Greeks and the report. Re-run 3–11 Nov 2026: on Mon 9 Nov the FX
+  forwards' unexplained fell from −467.5 to −55.5 EUR (EUR/USD 6M) and from −359.3 to
+  −0.9 EUR (USD/JPY 3M); book unexplained went from −4,421 to −3,640 EUR. One-day windows
+  are unchanged, since there the period theta equals theta_1d.
 
 ## ADR-023: Historical VaR/ES conventions
 
@@ -407,3 +414,37 @@ P&L_t < −VaR_{t−1}, with P&L the actual P&L of the static book.
   with the dataviz validator (blue/red: CVD ΔE 21.6, contrast ≥ 3:1).
 - **Backtest status** shows "insufficient observations (N = x)" below 250 observations
   (ADR-024).
+
+## ADR-026: Worst scenario 2 Oct 2026, investigated and kept unaltered
+
+**Question (owner).** The worst VaR scenario (2 Oct 2026, −83,321 EUR, mostly the payer
+swap) implies a very large one-day fall of the EUR AAA curve. Is it a real move or a curve
+artefact?
+
+**Evidence (ECB YC, fetched 2026-11-13).**
+- AAA (`G_N_A`) spot rates on 2 Oct: −11.5 / −13.6 / −12.8 bp at 2Y/5Y/10Y. These rank 4th,
+  2nd and 1st of 502 daily changes since Nov 2024 (daily sd ≈ 4 bp).
+- All-ratings (`G_N_C`) the same day: −2.0 / −3.6 / −7.7 bp (ranks 118, 74, 8). The two
+  curves' daily 5Y changes normally correlate at 0.94.
+- AAA minus all-ratings spread change on 2 Oct: −9.4 / −10.0 / −5.1 bp, i.e. 6.6σ / 7.0σ /
+  3.8σ of its daily changes (sd ≈ 1.4 bp). It moved −6.7 / −6.8 / −5.0 bp on 1 Oct, then
+  reversed +7.3 / +6.9 / +3.6 on 5 Oct and +2.4 / +4.1 / +3.4 on 6 Oct.
+- From 1 to 5 Oct both curves fell similarly: AAA −10.9 / −10.2 / −9.0 bp, all-ratings −8.8 /
+  −7.1 / −7.5 bp.
+- AAA Svensson parameters on 2 Oct: BETA3 changed by 4.7σ and BETA0 by 3.3σ of their
+  daily changes. Only 7 of 502 days had a larger BETA3 change.
+
+**Assessment.** The multi-day rally is real. The concentration of the AAA move on a single
+day, the large AAA vs all-ratings divergence that mostly reversed within two business days,
+and the parameter jump all point to a partly fitting- or sample-driven one-day move of the
+AAA curve. A genuine short AAA-specific dislocation cannot be excluded without bond-level
+data. The swap's P&L in that scenario (−63k) is consistent with its key-rate DV01 times
+the AAA move, so no pricing problem is involved.
+
+**Decision.** The scenario is kept unaltered (CLAUDE.md 21: no filtering without an owner
+decision). Diagnostic only: VaR99 would be 70,872 (−4.4%) and ES97.5 68,912 (−2.6%)
+without it.
+
+**Options for the owner:** (a) keep as is; (b) cross-check against an independent AAA
+source (e.g. the Bundesbank's Bund curve, terms to be checked first); (c) add a report flag
+for scenarios whose AAA vs all-ratings spread shock exceeds k σ, without altering them.

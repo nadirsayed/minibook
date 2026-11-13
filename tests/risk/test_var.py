@@ -72,7 +72,17 @@ def test_diversification_can_be_negative() -> None:
     a[:4], b[4:8] = -100.0, -100.0
     pnl = pd.DataFrame({"A": a, "B": b}, index=pd.RangeIndex(500, name="scenario_date"))
     res = summarize(
-        pnl, VarSettings(n_scenarios=500, var_confidence=0.99, es_confidence=0.975, n_worst=5), D
+        pnl,
+        VarSettings(
+            n_scenarios=500,
+            var_confidence=0.99,
+            es_confidence=0.975,
+            n_worst=5,
+            bootstrap_resamples=200,
+            bootstrap_seed=1,
+            bootstrap_ci=0.9,
+        ),
+        D,
     )
     assert list(res.standalone["var"]) == [0.0, 0.0]
     assert res.var == 100.0 and res.diversification_var == -100.0
@@ -155,3 +165,19 @@ def test_apply_pillar_shocks_equals_tents() -> None:
         slow = slow.shifted(tent(slow.times, k, 1e-4 * (k + 1)))
     grid = np.linspace(0.0, 35.0, 701)
     np.testing.assert_allclose(fast.zero(grid), slow.zero(grid), atol=1e-15)
+
+
+def test_bootstrap_intervals(settings: Settings) -> None:
+    """SYNTHETIC N(0, 1) sample of 500: seeded intervals are deterministic, contain the point
+    estimates, and VaR99 (one order statistic) is noisier than ES97.5 (mean of 13)."""
+    from minibook.risk.var import bootstrap_ci  # noqa: PLC0415
+
+    pnl = np.random.default_rng(11).normal(size=500)
+    cfg = settings.var
+    (v_lo, v_hi), (e_lo, e_hi) = bootstrap_ci(pnl, cfg)
+    assert ((v_lo, v_hi), (e_lo, e_hi)) == bootstrap_ci(pnl, cfg)  # deterministic
+    var, es = var_from_pnl(pnl, cfg.var_confidence), es_from_pnl(pnl, cfg.es_confidence)
+    assert v_lo <= var <= v_hi and e_lo <= es <= e_hi
+    assert (v_hi - v_lo) / var > (e_hi - e_lo) / es
+    other = cfg.model_copy(update={"bootstrap_seed": cfg.bootstrap_seed + 1})
+    assert bootstrap_ci(pnl, other) != bootstrap_ci(pnl, cfg)

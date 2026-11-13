@@ -190,3 +190,24 @@ def test_step_order_changes_split_not_total(settings: Settings) -> None:
     assert abs(a["vol"] - b["vol"]) > 1.0  # cross effect moves with the order (vanna)
     with pytest.raises(ValueError, match="permutation"):
         step_attribution([OPTION], snap, curr, cash, (Step.TIME,))
+
+
+def test_period_theta_captures_weekend_value_date_jump(settings: Settings) -> None:
+    """Fri -> Mon with no market move: the explain is exact for an FX forward although its
+    spot value date jumps over the weekend (owner decision, ADR-022). The old theta_1d x 3
+    (a Friday -> Saturday roll, same spot date) differs from the 3-day revaluation."""
+    from minibook.instruments.factory import fx_convention  # noqa: PLC0415
+    from minibook.instruments.fx_forward import FxForward  # noqa: PLC0415
+    from minibook.risk.greeks import theta  # noqa: PLC0415
+
+    fri = dataclasses.replace(flat_snapshot(), as_of=date(2026, 11, 6))
+    fri = dataclasses.replace(
+        fri,
+        curves={**fri.curves, "USD": fri.curves["USD"].shifted(lambda t: np.full_like(t, 0.02))},
+    )  # SYNTHETIC: USD rates 2% above EUR (carry)
+    mon = fri.roll(3)
+    conv = fx_convention(settings, "EURUSD")
+    fwd = FxForward("F", "EUR", "USD", 5e6, 1.10, date(2027, 5, 4), conv)
+    row = explain([fwd], fri, mon, settings.risk, settings.pnl).per_instrument.iloc[0]
+    assert row["unexplained"] == pytest.approx(0.0, abs=1e-9)
+    assert abs(3 * theta(fwd, fri, 1) - row["actual"]) > 1.0  # the gap that was closed

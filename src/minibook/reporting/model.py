@@ -180,8 +180,10 @@ def standard_notes(retrospective: bool) -> tuple[str, ...]:
         "Options are hypothetical European cash-settled contracts with bespoke expiries and "
         "exact percentage strikes (listed-contract multipliers): not listed-contract "
         "replication. Strikes are shown as % of the trade-date spot; index moves as % returns.",
-        "P&L explain uses Greeks of t-1 and theta x calendar days; over weekends and holidays "
-        "it misses FX spot value-date jumps (ADR-022). Step attribution is order-dependent.",
+        "P&L explain uses Greeks of t-1 and the period theta (revaluation from t-1 to t with "
+        "the market held at t-1: constant zero rates per tenor, so roll-down is included). "
+        "Theta 1d in the Greeks table is the one-day value. Step attribution is "
+        "order-dependent.",
     ]
     if retrospective:
         notes.append(

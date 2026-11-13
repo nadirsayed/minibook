@@ -57,6 +57,34 @@ def es_from_pnl(pnl: np.ndarray, confidence: float) -> float:
     return float(-p[: tail_count(confidence, p.size)].mean())
 
 
+def bootstrap_ci(
+    pnl: np.ndarray, cfg: VarSettings
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Seeded nonparametric bootstrap intervals for VaR and ES.
+
+    Resample the N scenario P&Ls with replacement B times (``cfg.bootstrap_resamples``,
+    generator seeded with ``cfg.bootstrap_seed``), recompute VaR and ES on each resample, and
+    return the two-sided ``cfg.bootstrap_ci`` percentile intervals ((VaR lo, hi), (ES lo, hi)).
+
+    VaR99 is one order statistic (the 5th worst of 500), while ES97.5 averages 13, so the
+    VaR interval is typically wider relative to its level. The i.i.d. bootstrap of an
+    extreme quantile is crude (bootstrap VaRs can only take sample values), so the intervals
+    indicate sampling noise; they are not exact coverage statements.
+    """
+    p = np.asarray(pnl, dtype=float)
+    rng = np.random.default_rng(cfg.bootstrap_seed)
+    draws = np.sort(p[rng.integers(0, p.size, size=(cfg.bootstrap_resamples, p.size))], axis=1)
+    k = tail_count(cfg.var_confidence, p.size)
+    m = tail_count(cfg.es_confidence, p.size)
+    var_b = -draws[:, k - 1]
+    es_b = -draws[:, :m].mean(axis=1)
+    lo, hi = 50 * (1 - cfg.bootstrap_ci), 50 * (1 + cfg.bootstrap_ci)
+    return (
+        (float(np.percentile(var_b, lo)), float(np.percentile(var_b, hi))),
+        (float(np.percentile(es_b, lo)), float(np.percentile(es_b, hi))),
+    )
+
+
 def scenario_pnl(
     insts: Sequence[Instrument], base: MarketSnapshot, scen: ScenarioSet
 ) -> pd.DataFrame:
@@ -99,6 +127,9 @@ class VarResult:
     diversification_var: float
     worst: pd.DataFrame  # n_worst scenarios: total and per-instrument P&L, by date
     pnl: pd.DataFrame  # full matrix: scenario date x instrument
+    var_ci: tuple[float, float] | None = None
+    es_ci: tuple[float, float] | None = None
+    ci_level: float | None = None
     delta_gamma_var: float | None = None
     delta_gamma_es: float | None = None
 
@@ -116,6 +147,7 @@ def summarize(pnl: pd.DataFrame, cfg: VarSettings, as_of: date) -> VarResult:
     var = var_from_pnl(total, cfg.var_confidence)
     order = np.argsort(total, kind="stable")[: cfg.n_worst]
     worst = pnl.iloc[order].assign(total=total[order])
+    var_ci, es_ci = bootstrap_ci(total, cfg)
     return VarResult(
         as_of=as_of,
         n_scenarios=len(pnl),
@@ -127,6 +159,9 @@ def summarize(pnl: pd.DataFrame, cfg: VarSettings, as_of: date) -> VarResult:
         diversification_var=float(standalone["var"].sum()) - var,
         worst=worst,
         pnl=pnl,
+        var_ci=var_ci,
+        es_ci=es_ci,
+        ci_level=cfg.bootstrap_ci,
     )
 
 

@@ -69,6 +69,21 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
     misleading green (ADR-024).
 17. Step attribution is order-dependent: always state the order; Shapley on the roadmap.
 
+## Approved owner decisions (round 5, after M6/M7)
+18. **Commits**: author Nadir Sayed (`git config user.*` set in the repo), committer Claude so
+    GitHub verifies the signature: `GIT_COMMITTER_NAME=Claude
+    GIT_COMMITTER_EMAIL=noreply@anthropic.com git commit ...` (also for `git pull --rebase`).
+    Every message ends with `Co-authored-by: Claude <noreply@anthropic.com>`. Never rewrite
+    past commits.
+19. **Owner contributions**: at each milestone end, give the owner one small self-contained
+    contribution (path, create/edit, exact content ending with a newline, commit message,
+    step-by-step github.com clicks). Wait for confirmation, check CI, `git pull --rebase`
+    before the next push.
+20. **Period theta in the explain** (ADR-022): one-step revaluation t-1 -> t with the market
+    held at t-1; "market held constant" = constant zero rates per tenor (roll-down), same
+    as DV01/VaR pillar shocks. theta_1d stays in the report.
+21. **Never filter or alter a VaR scenario without an owner decision.**
+
 ## Data rules (from the brief)
 - Keep raw payloads plus normalized parquet under `data/raw/`, with fetch timestamps.
 - Forward-fill at most 3 calendar days, logging observation date, age and reason; beyond
