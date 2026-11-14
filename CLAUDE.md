@@ -94,8 +94,10 @@ Methodology choices and their justification are in `docs/decisions.md` (ADRs).
     in PROGRESS.md; "runs unattended" goes back into the README only once it lands. A
     manual workflow_dispatch run is recorded as manual, never as unattended.
 24. **Schedule (ADR-027, refines decision 1).** Cron `17,47 11-17 * * 1-5` (off the top of
-    the hour, twice an hour); in-job window 13:00-19:00 Europe/Berlin, so 13:17-18:47 local
-    triggers run in both CET and CEST. The job is idempotent; extra triggers are safe.
+    the hour, twice an hour). The in-job check only skips runs before 13:00 Europe/Berlin
+    (read in Berlin time whatever the runner's timezone); **no upper bound** (owner,
+    2026-11-14), because GitHub can start cron runs hours late and a late run is harmless
+    (nothing is redone; exit 75 until the ECB curve is out). Extra triggers are safe.
 25. **Stable image names.** Files under `docs/img/` are referenced from outside this repo
     (the owner's profile README embeds the raw URL of `report_page4.png`). Keep their
     names stable (`report_page1.png`, `report_page4.png`): regenerate them in place; never

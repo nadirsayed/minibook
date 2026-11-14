@@ -163,7 +163,8 @@ pipeline:
   # Daily schedule (ADR-001): Mon-Fri, ~13:00-18:00 Europe/Berlin; cron is UTC, so the job
   # is triggered hourly and checks the local window itself.
   timezone: Europe/Berlin
+  # No upper bound (owner, 2026-11-14): daily exits 75 until the ECB curve is out and never
+  # redoes a day, so an end time would only drop cron runs that GitHub starts late.
   window_start_local: "13:00"
-  window_end_local: "19:00" # admits the last trigger, 18:47 local, in CET and CEST
   # Exit code when today's report cannot be produced yet (ECB curve not published).
   not_ready_exit_code: 75

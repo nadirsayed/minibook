@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+### Changed
+- Daily job: no upper bound on the publishing window (only runs before 13:00 Berlin are
+  skipped), so cron runs that GitHub starts hours late still publish; the window is read in
+  Europe/Berlin whatever the runner's timezone (tested with TZ=UTC), and the log shows
+  Berlin time with its offset instead of UTC labelled "local".
+- Bot commit message names the valuation dates of the reports it adds, not the run date.
+
 ## [1.0.1] - 2026-11-13
 
 ### Fixed

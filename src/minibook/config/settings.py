@@ -206,8 +206,7 @@ class PipelineSettings(_Frozen):
     reports_dir: Path
     fetch_lookback_days: int = Field(ge=0)
     timezone: str
-    window_start_local: time
-    window_end_local: time
+    window_start_local: time  # earliest local time a run acts; no upper bound (ADR-027)
     not_ready_exit_code: int
 
 

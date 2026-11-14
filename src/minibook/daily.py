@@ -2,8 +2,10 @@
 
 Triggered hourly on weekdays by GitHub Actions. Logic:
 
-1. Outside the local window (``pipeline.window_start_local``..``window_end_local``,
-   Europe/Berlin, which absorbs CET/CEST) or on a non-TARGET day: do nothing.
+1. Before ``pipeline.window_start_local`` (Europe/Berlin, which absorbs CET/CEST) or on a
+   non-TARGET day: do nothing. There is no upper bound (ADR-027): GitHub can start a cron
+   run hours late, and a late run is harmless because nothing is redone and a day whose
+   ECB curve is missing exits 75.
 2. Fetch market data incrementally.
 3. The due dates are every TARGET business day after the trade date and before today that
    has no output yet, oldest first.
@@ -36,11 +38,20 @@ from minibook.pipeline import run
 LOG = logging.getLogger(__name__)
 
 
+def local_time(now: datetime, settings: Settings) -> datetime:
+    """``now`` in the publishing timezone (Europe/Berlin), whatever the system timezone.
+
+    ``now`` must be timezone-aware: a naive datetime would be read in the *system* timezone
+    by ``astimezone`` (UTC on GitHub runners), which is exactly the ambiguity to avoid.
+    """
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError(f"naive datetime {now!r}: pass a timezone-aware time")
+    return now.astimezone(ZoneInfo(settings.pipeline.timezone))
+
+
 def in_window(now: datetime, settings: Settings) -> bool:
-    """Return True if ``now`` falls inside the local publishing window."""
-    local = now.astimezone(ZoneInfo(settings.pipeline.timezone))
-    p = settings.pipeline
-    return p.window_start_local <= local.time() <= p.window_end_local
+    """Return True from ``window_start_local`` (local time) on; there is no upper bound."""
+    return local_time(now, settings).time() >= settings.pipeline.window_start_local
 
 
 def due_dates(trade_date: date, today: date, out_root: Path) -> list[date]:
@@ -73,9 +84,15 @@ def daily(
     ``clock`` defaults to the module's ``utc_now``, looked up at call time.
     """
     now = clock() if clock is not None else utc_now()
-    local_today = now.astimezone(ZoneInfo(settings.pipeline.timezone)).date()
+    local = local_time(now, settings)
+    local_today = local.date()
     if not ignore_window and not in_window(now, settings):
-        LOG.info("outside the publishing window (%s local): nothing to do", now)
+        LOG.info(
+            "before the publishing window (%s %s, opens %s): nothing to do",
+            local.isoformat(timespec="seconds"),
+            settings.pipeline.timezone,
+            settings.pipeline.window_start_local.isoformat(timespec="minutes"),
+        )
         return [], True
     if not TARGET.is_business_day(local_today):
         LOG.info("%s is not a TARGET business day: nothing to do", local_today)

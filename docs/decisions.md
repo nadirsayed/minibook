@@ -489,10 +489,14 @@ in the report with VaR/ES with and without it, and detect such days automaticall
 - **Schedule** (`.github/workflows/daily.yml`; owner, 2026-11-13): UTC triggers at :17 and
   :47 past each hour from 11 to 17, Mon–Fri. They are off the top of the hour because GitHub
   may delay or drop scheduled runs there: the earlier hourly :05 triggers never fired on
-  their first day. `minibook daily` acts only inside 13:00–19:00 Europe/Berlin (CET/CEST
-  handled by zoneinfo) on TARGET days, so the admitted triggers are 13:17 to 18:47 local in
-  both seasons (tested against the workflow's cron line). Extra triggers are safe because
-  the job is idempotent. It catches up every TARGET day after the trade date without a
+  their first day. `minibook daily` acts on TARGET days from 13:00 Europe/Berlin on
+  (CET/CEST handled by zoneinfo, independent of the runner's system timezone, tested with
+  TZ=UTC), so every trigger from 13:17 to 18:47 local runs in both seasons (tested against
+  the workflow's cron line). **No upper bound** (owner, 2026-11-14): the first cron-triggered
+  run started 3.5–4 h late (21:27 UTC on 13 Nov) and an 18:15 or 19:00 end time dropped it.
+  A late run is harmless: a day is never redone and a day without its ECB curve exits 75.
+  Extra triggers are safe because the job is idempotent. The bot's commit message names the
+  valuation dates of the reports it adds. It catches up every TARGET day after the trade date without a
   report, oldest first. A day is ready when the ECB curve for it is stored or a later curve
   exists (the ECB skipped it, ADR-007). Otherwise exit 75 and the next trigger retries. The
   private option terms come from the `BOOK_PRIVATE_YAML_B64` secret and are checked against

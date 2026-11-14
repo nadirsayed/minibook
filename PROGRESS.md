@@ -106,9 +106,10 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   disclosure option A recorded in ADR-019, README and report notes.
 
 ## Unattended-operation proof (tracked separately, owner decision 23)
-- Status: **not yet proven.** No cron-triggered run fired on 2026-11-13 with the hourly
-  `5 11-17` schedule (0 scheduled runs since registration at 00:55 UTC). Schedule moved
-  to `17,47 11-17 * * 1-5` at ~15:05 UTC (ADR-027).
+- Status: **cron fires, publication not yet proven.** No cron-triggered run fired on
+  2026-11-13 with the hourly `5 11-17` schedule (0 scheduled runs since registration at
+  00:55 UTC). Schedule moved to `17,47 11-17 * * 1-5` at ~15:05 UTC (ADR-027). The first
+  cron-triggered run ever (#3) came at 21:27 UTC and published nothing (window, below).
 - Done when: a run with event `schedule` commits a report. Then restore "runs unattended"
   in the README.
 - Hypothesis under test (owner, 2026-11-13): scheduled runs are tied to the account that
@@ -120,7 +121,17 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   event `schedule`: none at 15:47, 16:17, 16:47 or 17:17 UTC after the owner's 34cdf32,
   as before at 15:17 after 220e4d5. Caveat: GitHub documents that scheduled runs can be
   delayed or dropped under load, and a new schedule may take time to register, so four
-  missed triggers do not exclude a slow registration. Next evidence: Monday 16 Nov.
+  missed triggers do not exclude a slow registration.
+  **Later result (owner, checked 2026-11-14): evidence for.** Daily report #3,
+  [run 43510848207](https://github.com/nadirsayed/minibook/actions/runs/43510848207), was
+  the first cron-triggered run ever, created 2026-11-13 21:27:27 UTC on 15e8e90, after the
+  owner's re-registration (34cdf32) and after no trigger fired for the Claude-pushed cron
+  edits. GitHub started it ~3.5–4 h late (likely a delayed 17:17 or 17:47 UTC
+  trigger), so it fell outside the then 13:00–19:00 window and logged "outside the publishing window ... nothing to do"
+  (with UTC mislabelled "local"). Fixed 2026-11-14: no upper bound, Berlin-time log label.
+  One run is suggestive, not proof; GitHub's docs tie the scheduled run's actor to the last
+  editor of the cron line, so the cron line is now edited only from the owner's account
+  (later commits from this session leave it untouched). Next evidence: Monday 16 Nov.
 - **Manual run, 2026-11-13 17:31 UTC** (workflow_dispatch, owner-approved, NOT the
   unattended proof): [run 43473649607](https://github.com/nadirsayed/minibook/actions/runs/43473649607)
   produced 2026-11-12 (`produced: ['2026-11-12']`, 5.6 s) and the bot committed it
@@ -130,6 +141,7 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   relative (summation order differs between CPUs).
 
 ## Next
+- Monday 16 Nov: first full cron window with the fixed window check (report for Fri 13 Nov).
 - 13 Nov evening: check the first scheduled Daily report runs. If the 12 Nov report was
   published unattended, tag v1.0.1 (PR #1 + disclosure note); otherwise report first.
 - Watch the scheduled runs through December (22 TARGET days).

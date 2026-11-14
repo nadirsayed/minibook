@@ -5,7 +5,9 @@ scenarios here, because the recorded window is short; the production setting is 
 from __future__ import annotations
 
 import json
+import logging
 import shutil
+import time
 from datetime import UTC, date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -210,11 +212,52 @@ def test_cron_and_window_admit_the_same_triggers_in_both_seasons(
 ) -> None:
     triggers = _cron_triggers(day)
     assert all(t.minute not in (0, 1, 2, 3, 4, 5) for t in triggers)  # off the top of the hour
-    admitted = sorted(
-        t.astimezone(ZoneInfo(settings.pipeline.timezone)).strftime("%H:%M")
+    local = {
+        t.astimezone(ZoneInfo(settings.pipeline.timezone)).strftime("%H:%M"): in_window(t, settings)
         for t in triggers
-        if in_window(t, settings)
-    )
-    # Twice an hour from 13:17 to 18:47 Europe/Berlin, whatever the season. Sorted: the
-    # order of the minutes in the cron line ("17,47" or "47,17") does not matter.
-    assert admitted == sorted(f"{h:02d}:{m}" for h in range(13, 19) for m in ("17", "47"))
+    }
+    # Every trigger from 13:17 to 18:47 Europe/Berlin runs, whatever the season (sets: the
+    # order of the minutes in the cron line does not matter); nothing before 13:00 runs.
+    wanted = {f"{h:02d}:{m}" for h in range(13, 19) for m in ("17", "47")}
+    assert wanted <= {hm for hm, ok in local.items() if ok}
+    assert min(hm for hm, ok in local.items() if ok) == "13:17"
+    assert all(not ok for hm, ok in local.items() if hm < "13:00")
+
+
+@pytest.mark.parametrize("system_tz", ["UTC", "America/New_York"])
+def test_window_uses_berlin_time_whatever_the_system_timezone(
+    settings: Settings,
+    system_tz: str,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Path,
+) -> None:
+    """GitHub runners use TZ=UTC; the window must still be read in Europe/Berlin."""
+    monkeypatch.setenv("TZ", system_tz)
+    time.tzset()
+    try:
+        # 12:50 UTC on Mon 16 Nov 2026 is 13:50 CET: open. Read as UTC it would be closed.
+        assert in_window(datetime(2026, 11, 16, 12, 50, tzinfo=UTC), settings)
+        # 11:50 UTC is 12:50 CET: closed. Read as UTC wall time it would also be closed;
+        # 12:10 UTC (13:10 CET) is open, though "12:10" alone is before 13:00.
+        assert not in_window(datetime(2026, 11, 16, 11, 50, tzinfo=UTC), settings)
+        assert in_window(datetime(2026, 11, 16, 12, 10, tzinfo=UTC), settings)
+        # No upper bound: the first cron run, started 3.5-4 h late at 21:27 UTC on
+        # Fri 13 Nov 2026 (22:27 CET), is admitted now.
+        assert in_window(datetime(2026, 11, 13, 21, 27, 42, tzinfo=UTC), settings)
+        with pytest.raises(ValueError, match="naive datetime"):
+            in_window(datetime(2026, 11, 16, 12, 50), settings)
+        # The log shows Berlin time with its offset, not UTC labelled "local".
+        caplog.set_level(logging.INFO, logger="minibook.daily")
+        early = datetime(2026, 11, 16, 11, 50, tzinfo=UTC)
+        assert daily(
+            settings,
+            tmp_path / "unused.yaml",
+            None,
+            None,
+            clock=lambda: early,  # type: ignore[arg-type]
+        ) == ([], True)
+        assert "2026-11-16T12:50:00+01:00 Europe/Berlin, opens 13:00" in caplog.text
+    finally:
+        monkeypatch.undo()
+        time.tzset()

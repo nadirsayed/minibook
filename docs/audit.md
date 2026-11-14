@@ -39,7 +39,8 @@ what was fixed and what was decided.
 Later the same day (owner decision), the schedule moved off the top of the hour to two
 triggers an hour (:17 and :47); the in-job window became 13:00–19:00 Berlin, admitting the
 last trigger (18:47) in both seasons (ADR-027). This supersedes the 18:15 window of
-finding 2.
+finding 2. On 2026-11-14 the upper bound was removed altogether, because GitHub started the
+first cron run 3.5–4 h late and the window dropped it (ADR-027).
 
 PR #1 ([nadirsayed/minibook#1](https://github.com/nadirsayed/minibook/pull/1)) passed
 [push CI](https://github.com/nadirsayed/minibook/actions/runs/43409990079) and
