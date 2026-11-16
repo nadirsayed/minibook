@@ -132,6 +132,17 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   One run is suggestive, not proof; GitHub's docs tie the scheduled run's actor to the last
   editor of the cron line, so the cron line is now edited only from the owner's account
   (later commits from this session leave it untouched). Next evidence: Monday 16 Nov.
+  **Monday 16 Nov check (17:32 UTC): no cron-triggered run.** Total runs with event
+  `schedule` is still 1 (#3, Fri 13 Nov 21:27 UTC). None of today's 13 triggers
+  (11:17-17:17 UTC) has produced a run so far; the 13 Nov report is not published. Since
+  #3, the only change to `daily.yml` was 583ee99 (Sat 14 Nov, pushed from this session):
+  it changed comments and the commit step, not the cron line (the last commit changing
+  the cron string is still the owner's 34cdf32). Two readings: (a) a push of the workflow
+  file from this session's account re-registers the schedule under it, whatever line
+  changes, which would fit both the zero runs after 4523b78/220e4d5 and the run after
+  34cdf32; (b) GitHub delays: #3 started 3.5-4 h late, so today's runs may still arrive
+  tonight (the window has no upper bound now, so a late run would publish). No manual
+  dispatch without the owner.
 - **Manual run, 2026-11-13 17:31 UTC** (workflow_dispatch, owner-approved, NOT the
   unattended proof): [run 43473649607](https://github.com/nadirsayed/minibook/actions/runs/43473649607)
   produced 2026-11-12 (`produced: ['2026-11-12']`, 5.6 s) and the bot committed it
