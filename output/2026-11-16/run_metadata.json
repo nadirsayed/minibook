@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-11-16",
+  "backtest_status": "insufficient observations (N = 9)",
+  "breaches": [],
+  "config_hash": "7d10c2141c07df826745d3ee135973e43f79913c2a74776cc35f837f3c483326",
+  "data_first_fetched_utc": {
+    "ecb/fx": "2026-11-16T21:02:37.818580+00:00",
+    "ecb/yield_curve": "2026-11-17T19:51:43.149982+00:00",
+    "equities/index_close": "2026-11-17T19:52:30.417976+00:00",
+    "mof/jgb_cm": "2026-11-17T19:52:28.725464+00:00",
+    "treasury/par_curve": "2026-11-16T21:02:59.034574+00:00"
+  },
+  "forward_fills": [],
+  "git_sha": "45ad4f7dd33ea6a64dc0b73965deb02978a20af4",
+  "minibook_version": "1.0.1",
+  "previous": "2026-11-13",
+  "quality_flags": [],
+  "retrospective_fetch": false,
+  "run_at_utc": "2026-11-17T19:52:30.451092+00:00",
+  "run_seconds": 2.9
+}
