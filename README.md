@@ -10,8 +10,9 @@
 from real public market data.** minibook values a EUR interest rate swap, two FX forwards
 and four equity index options; computes their Greeks; explains the day's P&L factor by
 factor; measures 1-day 99% VaR and 97.5% Expected Shortfall by full-revaluation historical
-simulation; and publishes a PDF risk report. A scheduled GitHub Actions workflow produces
-and commits each day's report.
+simulation; and publishes a PDF risk report. It runs unattended: a scheduled GitHub
+Actions workflow produces and commits each day's report (every report since 13 November
+2026 was published by a cron-triggered run).
 
 Pricing, curves, calendars and risk are built from scratch with numpy/scipy. QuantLib is
 used only in the tests, as an independent cross-check.

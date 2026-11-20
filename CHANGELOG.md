@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format: [Keep a Changel
   Europe/Berlin whatever the runner's timezone (tested with TZ=UTC), and the log shows
   Berlin time with its offset instead of UTC labelled "local".
 - Bot commit message names the valuation dates of the reports it adds, not the run date.
+- README: "runs unattended" restored once the first cron-triggered run published a report
+  (13 Nov 2026 report, run on 16 Nov).
 
 ## [1.0.1] - 2026-11-13
 

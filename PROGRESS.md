@@ -106,7 +106,15 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   disclosure option A recorded in ADR-019, README and report notes.
 
 ## Unattended-operation proof (tracked separately, owner decision 23)
-- Status: **cron fires, publication not yet proven.** No cron-triggered run fired on
+- Status: **PROVEN (2026-11-16 21:03 UTC).** Cron-triggered run #4 published the 13 Nov
+  report unattended (45ad4f7, "chore(reports): daily risk report 2026-11-13"); #5-#7
+  published 16, 17 and 18 Nov the same way. "Runs unattended" restored in the README.
+- Pattern so far: exactly one scheduled run per day, created 19:25-21:03 UTC (20:25-22:03
+  Berlin) although the triggers are 11:17-17:17 UTC; i.e. GitHub fires one trigger a day,
+  hours late. Each run produced one date, the artifact held only the new PDF, and the
+  bot commit names the valuation date. Reports therefore arrive in the evening, not in
+  the 13:00-18:00 window of decision 1 (owner to decide whether that matters).
+- History: cron fires, publication not yet proven (until 16 Nov). No cron-triggered run fired on
   2026-11-13 with the hourly `5 11-17` schedule (0 scheduled runs since registration at
   00:55 UTC). Schedule moved to `17,47 11-17 * * 1-5` at ~15:05 UTC (ADR-027). The first
   cron-triggered run ever (#3) came at 21:27 UTC and published nothing (window, below).
@@ -143,6 +151,11 @@ Resume point for a new session. Updated after each milestone. Standing rules: CL
   34cdf32; (b) GitHub delays: #3 started 3.5-4 h late, so today's runs may still arrive
   tonight (the window has no upper bound now, so a late run would publish). No manual
   dispatch without the owner.
+  **Outcome:** reading (b). Run #4 came at 21:02 UTC on 16 Nov on c9476d7, i.e. after
+  583ee99 (a push of the workflow file from this session that left the cron line alone),
+  and published 13 Nov; #5-#7 followed daily. Reading (a) is refuted; the data fit GitHub's
+  documented rule (the schedule's actor is the last editor of the cron line) plus long
+  delays. The zero runs on 13 Nov daytime remain unexplained (registration latency?).
 - **Manual run, 2026-11-13 17:31 UTC** (workflow_dispatch, owner-approved, NOT the
   unattended proof): [run 43473649607](https://github.com/nadirsayed/minibook/actions/runs/43473649607)
   produced 2026-11-12 (`produced: ['2026-11-12']`, 5.6 s) and the bot committed it
