@@ -1,0 +1,110 @@
+{
+  "as_of": "2026-11-26",
+  "backtest_status": "insufficient observations (N = 17)",
+  "breaches": [],
+  "config_hash": "7d10c2141c07df826745d3ee135973e43f79913c2a74776cc35f837f3c483326",
+  "data_first_fetched_utc": {
+    "ecb/fx": "2026-11-26T20:12:00.485082+00:00",
+    "ecb/yield_curve": "2026-11-27T19:57:32.734636+00:00",
+    "equities/index_close": "2026-11-27T19:58:01.258528+00:00",
+    "mof/jgb_cm": "2026-11-27T19:57:58.900153+00:00",
+    "treasury/par_curve": "2026-11-26T20:12:20.791905+00:00"
+  },
+  "forward_fills": [
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "1M",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "2M",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "3M",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "4M",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "6M",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "1Y",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "2Y",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "3Y",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "5Y",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "7Y",
+      "target_date": "2026-11-26"
+    },
+    {
+      "age_days": 1,
+      "dataset": "treasury/par_curve",
+      "obs_date": "2026-11-25",
+      "reason": "no par_curve observation for 2026-11-26; 2026-11-26 is a US-FED holiday",
+      "series": "10Y",
+      "target_date": "2026-11-26"
+    }
+  ],
+  "git_sha": "1c88c7c1997720fdfa4f72f6648f2024658c71b7",
+  "minibook_version": "1.0.1",
+  "previous": "2026-11-25",
+  "quality_flags": [],
+  "retrospective_fetch": false,
+  "run_at_utc": "2026-11-27T19:58:01.320899+00:00",
+  "run_seconds": 3.08
+}
